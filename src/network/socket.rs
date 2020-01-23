@@ -49,37 +49,21 @@ fn test_parse_network_address ()
     assert! ( result_8.is_err () );
 }
 
-pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result< SocketAddr, Error >
-{
-    let reply : Result< SocketAddr, String >;
+pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result<SocketAddr, std::net::AddrParseError >
 
-    if address_string.is_empty () || default_port == 0x0000
-    {
-        reply = Err( "address is empty or port is 0.".to_string () );
-    }
-    else
-    {
-        if let Ok( socket ) = parse_socket_address ( address_string )
-        {
-            reply = Ok( socket );
-        }
-        else
-        {
-            let ip : Result< IpAddr, String > = parse_ip_address ( address_string );
+// {
+//     if address_string.is_empty () || default_port == 0x0000
+//     {
+//         Err( "address is empty or port is 0.".to_string ());
+//     }
+//     else
+//     {
 
-            if ip.is_ok ()
-            {
-                reply = Ok( SocketAddr::new ( ip.unwrap (),
-                                              default_port ) );
-            }
-            else
-            {
-                reply = Err( ip.unwrap_err () );
-            }
-        }
-    }
-
-    return reply;
+            let ip = parse_ip_address ( address_string )?;
+            parse_socket_address ( address_string )?;
+            Ok( SocketAddr::new ( ip,default_port ) )
+            
+   // }
 }
 
 //	===============================================================================================
