@@ -1,6 +1,3 @@
-
-
-use std::error::Error;
 use std::net::{AddrParseError, IpAddr, SocketAddr};
 use std::str::FromStr;
 
@@ -52,7 +49,7 @@ fn test_parse_network_address ()
     assert! ( result_8.is_err () );
 }
 
-pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result< SocketAddr, String >
+pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result< SocketAddr, Error >
 {
     let reply : Result< SocketAddr, String >;
 
@@ -176,27 +173,21 @@ fn test_parse_socket_address ()
     assert! ( result_7.is_err () );
 }
 
-fn parse_socket_address ( address_string : &str ) -> Result< SocketAddr, String >
+fn parse_socket_address ( address_string : &str ) -> Result<SocketAddr, std::net::AddrParseError>
 {
-    let reply : Result< SocketAddr, String >;
 
-    if address_string.is_empty ()
-    {
-        reply = Err( "address is empty.".to_string () );
-    }
-    else
-    {
-        let result : Result< SocketAddr, AddrParseError > = SocketAddr::from_str ( address_string );
+    /*
+        Use the built in error handling types and return those instead of using a String based return
+        The '?' operator is short for the try! macro, it basically attempts the operation and will return an 
+        Ok (positive result, the expected item) or an Error of some kind
 
-        if result.is_ok ()
-        {
-            reply = Ok( result.unwrap () );
-        }
-        else
-        {
-            reply = Err( result.unwrap_err ().description ().to_owned () );
-        }
-    }
+        Ok(result) will return the result of the SocketAddr::FromStr function to the calling function, whether it
+        is an SocketAddr or an Error
+    */
+    let result =  SocketAddr::from_str ( address_string )?;
+    Ok(result)        
 
-    return reply;
 }
+    
+   // return reply;
+

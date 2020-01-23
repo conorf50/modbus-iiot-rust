@@ -14,3 +14,6 @@ travis-ci = { repository = "BiancoRoyal/modbus-iiot-rust" }
 coveralls = { repository = "BiancoRoyal/modbus-iiot-rust", branch = "master", service = "github" }
 is-it-maintained-issue-resolution = { repository = "BiancoRoyal/modbus-iiot-rust" }
 is-it-maintained-open-issues = { repository = "BiancoRoyal/modbus-iiot-rust" }
+
+[dependencies]
+#failure = "*"
