@@ -12,7 +12,7 @@ use core::methods::*;
 use core::timehandling::*;
 use tcp::masteraccess::*;
 use tcp::streamtelegram::*;
-
+use std::io::Error;
 //	===============================================================================================
 
 pub struct TcpClient
@@ -117,16 +117,18 @@ impl TcpClient
     ///     client.disconnect();    
     /// }
 	/// ```
-	pub fn connect ( &mut self ) -> Result< (), String >
-	{
-		let reply : Result< (), String >;
+//	pub fn connect ( &mut self ) -> Result< (), String >
+	pub fn connect ( &mut self ) -> Result<TcpStream, Error>
 
-		let connection_result : Result< TcpStream, String > = create_tcp_stream ( &self.address, 
-																				  self.port );
+	{
+		//let reply : Result< (), String >;
+
+		//let connection_result : Result< TcpStream, String > = create_tcp_stream ( &self.address,self.port );
+		let connection_result = create_tcp_stream ( &self.address,self.port )?;
 
 		if connection_result.is_ok ()
 		{
-			let connection : TcpStream = connection_result.unwrap ();
+			let connection : TcpStream = connection_result().unwrap();
 
 			let timeout : Duration = Duration::from_millis ( 500 );
 
@@ -136,7 +138,7 @@ impl TcpClient
 
 			self.stream = Some( connection );
 
-			reply = Ok( () );
+			Ok(connection)
 		}
 		else
 		{
