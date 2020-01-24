@@ -117,35 +117,23 @@ impl TcpClient
     ///     client.disconnect();    
     /// }
 	/// ```
-//	pub fn connect ( &mut self ) -> Result< (), String >
-	pub fn connect ( &mut self ) -> Result<TcpStream, Error>
+
+	
+	pub fn connect ( &mut self ) -> Result<TcpStream, Box<dyn std::error::Error>>
 
 	{
-		//let reply : Result< (), String >;
+		
+		let connection = create_tcp_stream(&self.address,self.port)?;
 
-		//let connection_result : Result< TcpStream, String > = create_tcp_stream ( &self.address,self.port );
-		let connection_result = create_tcp_stream ( &self.address,self.port )?;
+		let timeout : Duration = Duration::from_millis ( 500 );
 
-		if connection_result.is_ok ()
-		{
-			let connection : TcpStream = connection_result().unwrap();
+		let _ = connection.set_read_timeout (Some(timeout));
+		let _ = connection.set_write_timeout (Some(timeout));
+		let _ = connection.set_nodelay (true);
 
-			let timeout : Duration = Duration::from_millis ( 500 );
+		self.stream = Some( connection );
 
-			let _ = connection.set_read_timeout ( Some( timeout ) );
-			let _ = connection.set_write_timeout ( Some( timeout ) );
-			let _ = connection.set_nodelay ( true );
-
-			self.stream = Some( connection );
-
-			Ok(connection)
-		}
-		else
-		{
-			reply = Err( connection_result.unwrap_err () );
-		}
-
-		return reply;
+		Ok(connection)
 	}
 
 	///	Close the connection to the device if it is open.
