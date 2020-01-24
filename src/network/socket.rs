@@ -63,53 +63,39 @@ pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Re
 #[test]
 fn test_parse_ip_address ()
 {
-    let result_1 : Result< IpAddr, String > = parse_ip_address ( "127.0.0.1" );
+    let result_1 : Result< IpAddr, AddrParseError > = parse_ip_address ( "127.0.0.1" );
     assert! ( result_1.is_ok () );
 
     let ip_1 : IpAddr = result_1.unwrap ();
     assert! ( ip_1.is_ipv4 () );
     assert_eq! ( format!("{}", ip_1 ), "127.0.0.1" );
 
-    let result_2 : Result< IpAddr, String > = parse_ip_address ( "127.0.0.1111" );
+    let result_2 : Result< IpAddr, AddrParseError > = parse_ip_address ( "127.0.0.1111" );
     assert! ( result_2.is_err () );
 
-    let result_3 : Result< IpAddr, String > = parse_ip_address ( "::1" );
+    let result_3 : Result< IpAddr, AddrParseError > = parse_ip_address ( "::1" );
     assert! ( result_3.is_ok () );
 
     let ip_2 : IpAddr = result_3.unwrap ();
     assert! ( ip_2.is_ipv6 () );
     assert_eq! ( format! ( "{}", ip_2 ), "::1" );
 
-    let result_4 : Result< IpAddr, String > = parse_ip_address ( "::111111" );
+    let result_4 : Result< IpAddr, AddrParseError > = parse_ip_address ( "::111111" );
     assert! ( result_4.is_err () );
 
-    let result_5 : Result< IpAddr, String > = parse_ip_address ( "" );
+    let result_5 : Result< IpAddr, AddrParseError > = parse_ip_address ( "" );
     assert! ( result_5.is_err () );
 }
 
-fn parse_ip_address ( address_string : &str ) -> Result< IpAddr, String >
-{
-    let reply : Result< IpAddr, String >;
 
-    if address_string.is_empty ()
-    {
-        reply = Err( "address is empty.".to_string () );
-    }
-    else
-    {
-        let result : Result< IpAddr, AddrParseError > = IpAddr::from_str ( address_string );
+fn parse_ip_address ( address_string : &str ) -> Result< IpAddr, AddrParseError> {
+    //let reply : Result< IpAddr, String >;
 
-        if result.is_ok ()
-        {
-            reply = Ok( result.unwrap () );
-        }
-        else
-        {
-            reply = Err( result.unwrap_err ().description ().to_owned () );
-        }
-    }
 
-    return reply;
+    let result : Result< IpAddr, AddrParseError > = IpAddr::from_str( address_string );
+    Ok(result.unwrap())
+        
+    //return reply;
 }
 
 //	===============================================================================================
