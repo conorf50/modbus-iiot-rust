@@ -12,7 +12,6 @@ use core::methods::*;
 use core::timehandling::*;
 use tcp::masteraccess::*;
 use tcp::streamtelegram::*;
-use std::io::Error;
 //	===============================================================================================
 
 pub struct TcpClient
