@@ -118,8 +118,8 @@ impl TcpClient
     /// }
 	/// ```
 
-	
-	pub fn connect ( &mut self ) -> Result<TcpStream, Box<dyn std::error::Error>>
+
+	pub fn connect ( &mut self ) -> Result<(), Box<dyn std::error::Error>>
 
 	{
 		
@@ -131,9 +131,9 @@ impl TcpClient
 		let _ = connection.set_write_timeout (Some(timeout));
 		let _ = connection.set_nodelay (true);
 
-		self.stream = Some( connection );
+		self.stream = Some(connection );
 
-		Ok(connection)
+		Ok(())
 	}
 
 	///	Close the connection to the device if it is open.
