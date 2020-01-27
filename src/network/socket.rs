@@ -1,51 +1,53 @@
 use std::net::{AddrParseError, IpAddr, SocketAddr};
 use std::str::FromStr;
-use std::error;
+use std::fmt;
 //	===============================================================================================
 
 
+// custom error handling
 
-// fn parse_ip_address ( address_string : &str ) -> Result< IpAddr, AddrParseError> {
+// see: https://stackoverflow.com/questions/51550167/how-to-manually-return-a-result-boxdyn-error
+
+#[derive(Debug)]
+struct NetParseErr();
+
+impl fmt::Display for NetParseErr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "There is an error: {}", self)
+    }
+}
+
+impl std::error::Error for NetParseErr{}
+
+
+fn parse_ip_address ( address_string : &str ) -> Result< IpAddr, AddrParseError> {
     
-//     let result  = IpAddr::from_str( address_string )?;
-//     Ok(result)
+    let result  = IpAddr::from_str( address_string )?;
+    Ok(result)
 
-// }
-
-
-// fn parse_socket_address ( address_string : &str ) -> Result<SocketAddr, std::net::AddrParseError>
-// {
-
-//     /*
-//         Use the built in error handling types and return those instead of using a String based return
-//         The '?' operator is short for the try! macro, it basically attempts the operation and will return an 
-//         Ok (positive result, the expected item) or an Error of some kind
-
-//         Ok(result) will return the result of the SocketAddr::FromStr function to the calling function, whether it
-//         is an SocketAddr or an Error
-//     */
-//     let result =  SocketAddr::from_str ( address_string )?;
-//     Ok(result)        
-
-// }
+}
 
 
-pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result<SocketAddr, Box<dyn error::Error>>
+pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result<SocketAddr, Box<dyn std::error::Error>>
 {
+    /*
+        Create a valid Socket by first parsing the Ip address and then appending the 
+        port number to it
+    */
 
-            /*
-                Create a valid Socket by first parsing the Ip address and then appending the 
-                port number to it
-            */
+    // return an instance of a custom Error type defined above
 
+    if address_string.is_empty() {
+        return Result::Err(Box::new(NetParseErr()));
+    }
+    else{    
         // convert the ip to the socket_address representation of it. Try to parse the IP, if not
         // successful return an Error.
         let addr = address_string.parse::<IpAddr>()?;
-        //Now create a Socket
-         // create a socket. 
-        let socket = SocketAddr::new(addr,  default_port);
+        // now create a socket. 
+        let socket = SocketAddr::new(addr, default_port);
         Ok(socket)
-            
+    }   
 }
 
 
@@ -53,39 +55,71 @@ pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Re
 #[test]
 fn test_parse_network_address ()
 {
-    let result_1  = parse_network_address ( "127.0.0.1", 502 );
-    assert! (result_1.is_ok());
+    // Correct network address with a valid port
+    let ipv4_1  = parse_network_address ( "127.0.0.1", 502 );
+    assert! (ipv4_1.is_ok());
 
-    // let result_2  = parse_network_address ( "127.0.0.1:504",502 );
-    // assert! ( result_2.is_ok () );
+    let socket_1 : SocketAddr = ipv4_1.unwrap ();
+    assert! ( socket_1.is_ipv4 () );
+    assert_eq! ( format! ( "{}", socket_1.ip () ), "127.0.0.1" );
+    assert_eq! ( socket_1.port (), 502 );
 
-    // let socket_1 : SocketAddr = result_2.unwrap ();
-    // assert! ( socket_1.is_ipv4 () );
-    // assert_eq! ( format! ( "{}", socket_1.ip () ), "127.0.0.1" );
-    // assert_eq! ( socket_1.port (), 504 );
 
-    let result_3  = parse_network_address ( "127.0.300.1",502 );
-    assert! ( result_3.is_err () );
+    // Local IPV4 address
+    let ipv4_2  = parse_network_address ( "192.168.0.1",1502 );
+    assert! ( ipv4_2.is_ok());
 
-    let result_4 : Result< SocketAddr, Box<dyn error::Error> > = parse_network_address ( "::1", 502 );
-    assert! ( result_4.is_ok () );
+    let socket_2 : SocketAddr = ipv4_2.unwrap ();
+    assert! ( socket_2.is_ipv4());
+    assert_eq! ( format! ( "{}", socket_2.ip () ), "192.168.0.1" );
+    assert_eq! ( socket_2.port (), 1502 );
 
-    // let result_5 : Result< SocketAddr, Box<dyn error::Error>> = parse_network_address ( "[::1]:504", 502 );
-    // assert! ( result_5.is_ok () );
 
-    // let socket_2 : SocketAddr = result_5.unwrap ();
-    // assert! ( socket_2.is_ipv6 () );
-    // assert_eq! ( format! ( "{}", socket_2.ip () ), "::1" );
-    // assert_eq! ( socket_2.port (), 504 );
 
-    let result_6 : Result< SocketAddr, Box<dyn error::Error>> = parse_network_address ( "::111111", 502 );
-    assert! ( result_6.is_err () );
+    // Valid IpV6 address with valid port
+    let ipv6_1 : Result< SocketAddr, Box<dyn Error>> = parse_network_address ( "::1", 502 );
+    assert! ( ipv6_1.is_ok ());
 
-    let result_7 : Result< SocketAddr, Box<dyn error::Error>> = parse_network_address ( "127.0.0.1", 0 );
-    assert! ( result_7.is_err () );
+    let socket_2 : SocketAddr = ipv6_1.unwrap ();
+    assert! ( socket_2.is_ipv6());
+    assert_eq! ( format! ( "{}", socket_2.ip () ), "::1" );
+    assert_eq! ( socket_2.port (), 502 );
 
-    let result_8 : Result< SocketAddr, Box<dyn error::Error>> = parse_network_address ( "", 502 );
-    assert! ( result_8.is_err () );
+    // Valid IpV6 address with valid port
+    // let ipv6_2 : Result<SocketAddr, Box<dyn error::Error>> = parse_network_address ( "fe80::a488:b9f7:398c:1745", 44234 );
+    // assert! ( ipv6_2.is_ok());
+
+    // let socket_3 : SocketAddr = ipv6_2.unwrap();
+    // assert! ( socket_3.is_ipv6());
+    // assert_eq! ( format! ( "{}", socket_3.ip () ), "fe80::a488:b9f7:398c:1745");
+    // assert_eq! ( socket_3.port (), 44234);
+
+    
+    // Valid IpV6 address with valid port
+    let ipv6_2 : Result< SocketAddr, Box<dyn Error> > = parse_network_address ( "::1", 502 );
+    assert! ( ipv6_2.is_ok () );
+    let socket_3 : SocketAddr = ipv6_2.unwrap();
+    assert! ( socket_3.is_ipv6());
+    assert_eq! ( format! ( "{}", socket_3.ip () ), "::1");
+    assert_eq! ( socket_3.port (), 502);
+
+
+
+    // IP address that's out of range
+    let err_1  = parse_network_address ( "127.0.300.1",502 );
+    assert! ( err_1.is_err ());
+    
+    // Incorrectly formatted ipv6 address
+    let err_2 : Result< SocketAddr, Box<dyn Error>> = parse_network_address ( "::111111", 502 );
+    assert! ( err_2.is_err () );
+
+    // Passing a port of 0 should fail
+    let err_3 : Result< SocketAddr, Box<dyn Error>> = parse_network_address ( "127.0.0.1", 0 );
+    assert! (err_3.is_err());
+
+    // Passing no address should fail
+    let err_4 : Result< SocketAddr, Box<dyn Error>> = parse_network_address ( "", 502 );
+    assert! ( err_4.is_err () );
 }
 
 
