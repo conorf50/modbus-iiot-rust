@@ -1,5 +1,3 @@
-
-
 use std::error;
 use std::net::{TcpStream};
 use network::socket::parse_network_address;

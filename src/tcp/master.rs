@@ -1,5 +1,3 @@
-
-
 use std::net::{TcpStream, Shutdown};
 use std::result::Result;
 use std::time::Duration;

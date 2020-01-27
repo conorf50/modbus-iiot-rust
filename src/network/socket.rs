@@ -1,5 +1,4 @@
-use std::net::{AddrParseError, IpAddr, SocketAddr};
-use std::str::FromStr;
+use std::net::{IpAddr, SocketAddr};
 use std::fmt;
 //	===============================================================================================
 
@@ -10,23 +9,22 @@ use std::fmt;
 
 #[derive(Debug)]
 struct NetParseErr();
-
 impl fmt::Display for NetParseErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "There is an error: {}", self)
     }
 }
-
 impl std::error::Error for NetParseErr{}
 
-
-fn parse_ip_address ( address_string : &str ) -> Result< IpAddr, AddrParseError> {
-    
-    let result  = IpAddr::from_str( address_string )?;
-    Ok(result)
-
+// another custom error for a zero port
+#[derive(Debug)]
+struct ZeroPortErr();
+impl fmt::Display for ZeroPortErr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Port number cannot be zero: {}", self)
+    }
 }
-
+impl std::error::Error for ZeroPortErr{}
 
 pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result<SocketAddr, Box<dyn std::error::Error>>
 {
@@ -40,6 +38,11 @@ pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Re
     if address_string.is_empty() {
         return Result::Err(Box::new(NetParseErr()));
     }
+
+    if default_port == 0x0000 || default_port == 0 {
+        return Result::Err(Box::new(ZeroPortErr()));
+    }
+
     else{    
         // convert the ip to the socket_address representation of it. Try to parse the IP, if not
         // successful return an Error.
@@ -77,7 +80,7 @@ fn test_parse_network_address ()
 
 
     // Valid IpV6 address with valid port
-    let ipv6_1 : Result< SocketAddr, Box<dyn Error>> = parse_network_address ( "::1", 502 );
+    let ipv6_1 : Result< SocketAddr, Box<dyn std::error::Error>> = parse_network_address ( "::1", 502 );
     assert! ( ipv6_1.is_ok ());
 
     let socket_2 : SocketAddr = ipv6_1.unwrap ();
@@ -96,7 +99,7 @@ fn test_parse_network_address ()
 
     
     // Valid IpV6 address with valid port
-    let ipv6_2 : Result< SocketAddr, Box<dyn Error> > = parse_network_address ( "::1", 502 );
+    let ipv6_2 : Result< SocketAddr, Box<dyn std::error::Error> > = parse_network_address ( "::1", 502 );
     assert! ( ipv6_2.is_ok () );
     let socket_3 : SocketAddr = ipv6_2.unwrap();
     assert! ( socket_3.is_ipv6());
@@ -110,15 +113,15 @@ fn test_parse_network_address ()
     assert! ( err_1.is_err ());
     
     // Incorrectly formatted ipv6 address
-    let err_2 : Result< SocketAddr, Box<dyn Error>> = parse_network_address ( "::111111", 502 );
+    let err_2 : Result< SocketAddr, Box<dyn std::error::Error>> = parse_network_address ( "::111111", 502 );
     assert! ( err_2.is_err () );
 
     // Passing a port of 0 should fail
-    let err_3 : Result< SocketAddr, Box<dyn Error>> = parse_network_address ( "127.0.0.1", 0 );
+    let err_3 : Result< SocketAddr, Box<dyn std::error::Error>> = parse_network_address ( "127.0.0.1", 0 );
     assert! (err_3.is_err());
 
     // Passing no address should fail
-    let err_4 : Result< SocketAddr, Box<dyn Error>> = parse_network_address ( "", 502 );
+    let err_4 : Result< SocketAddr, Box<dyn std::error::Error>> = parse_network_address ( "", 502 );
     assert! ( err_4.is_err () );
 }
 
