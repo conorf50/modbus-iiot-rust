@@ -47,15 +47,11 @@ impl ModbusTelegram
 
 		if bytes.len () > 9
 		{
-			let response_transaction_identifier : Option< u16 > = extract_word_from_bytearray ( &bytes, 
-																								0 );
-			let response_unit_identifier : Option< u8 > = extract_byte_from_bytearray ( &bytes, 
-																						6 );
-			let response_function_code : Option< u8 > =	extract_byte_from_bytearray ( &bytes, 
-																					  7 );
-			let function_code : u8 = response_function_code.unwrap ();
-			let response_payload : Option< Vec< u8 > > = extract_payload_by_function_code ( function_code, 
-																							&bytes );
+			let response_transaction_identifier : Option< u16 > = extract_word_from_bytearray(&bytes,0);
+			let response_unit_identifier : Option< u8 > = extract_byte_from_bytearray(&bytes, 6);
+			let response_function_code : Option< u8 > =	extract_byte_from_bytearray(&bytes, 7);
+			let function_code : u8 = response_function_code.unwrap();
+			let response_payload : Option< Vec< u8 > > = extract_payload_by_function_code ( function_code, &bytes );
 
 			if response_transaction_identifier.is_some () &&
 			   response_unit_identifier.is_some () &&
@@ -91,20 +87,14 @@ impl ModbusTelegram
 
 		let length_for_header : u16 = self.payload.len () as u16 + MODBUS_UNIT_IDENTIFIER_LENGTH + MODBUS_FUNCTION_CODE_LENGTH;
 
-		append_word_to_bytearray ( &mut reply, 
-								   self.transaction_identifier );
-		append_word_to_bytearray ( &mut reply, 
-								   MODBUS_PROTOCOL_IDENTIFIER_TCP );
-		append_word_to_bytearray ( &mut reply, 
-								   length_for_header );
-		append_byte_to_bytearray ( &mut reply, 
-								   self.unit_identifier );
-		append_byte_to_bytearray ( &mut reply, 
-								   self.function_code );
-		append_bytearray_to_bytearray ( &mut reply, 
-										&self.payload );
+		append_word_to_bytearray ( &mut reply, self.transaction_identifier );
+		append_word_to_bytearray ( &mut reply, MODBUS_PROTOCOL_IDENTIFIER_TCP );
+		append_word_to_bytearray ( &mut reply, length_for_header );
+		append_byte_to_bytearray ( &mut reply, self.unit_identifier );
+		append_byte_to_bytearray ( &mut reply, self.function_code );
+		append_bytearray_to_bytearray ( &mut reply, &self.payload);
 
-		return Some( reply );
+		return Some(reply);
 	}
 
 	pub fn get_expected_byte_count ( &self ) -> Option< u8 >
@@ -195,8 +185,7 @@ fn test_extract_payload_by_function_code ()
 	test_data_2.push ( 0x00 );	//	quantity_of_registers
 	test_data_2.push ( 0x10 );	//	quantity_of_registers
 	
-	let result_data_2 : Option< Vec< u8 > > = extract_payload_by_function_code ( 0x10, 
-																				 &test_data_2 );
+	let result_data_2 : Option< Vec< u8 > > = extract_payload_by_function_code ( 0x10, &test_data_2 );
 	assert! ( result_data_2.is_some () );
 
 	let result_bytes_2 : Vec< u8 > = result_data_2.unwrap ();
@@ -268,13 +257,10 @@ fn extract_payload_with_byte_count ( bytes : &Vec< u8 > ) -> Option< Vec< u8 > >
 {
 	let reply : Option< Vec< u8 > >;
 
-	let byte_count : Option< u8 > = extract_byte_from_bytearray ( &bytes, 
-																  8 );
+	let byte_count : Option< u8 > = extract_byte_from_bytearray ( &bytes, 8 );
 	let count : u8 = byte_count.unwrap () + 1;
 
-	reply = extract_bytes_from_bytearray ( &bytes, 
-										   8, 
-										   count );
+	reply = extract_bytes_from_bytearray ( &bytes, 8, count);
 
 	return reply;
 }
@@ -316,9 +302,7 @@ fn extract_payload_without_byte_count ( bytes : &Vec< u8 > ) -> Option< Vec< u8 
 
 	let byte_count : u8 = bytes.len () as u8 - MODBUS_HEADER_SIZE - 1; // -1 for FunctionCode
 
-	reply = extract_bytes_from_bytearray ( &bytes, 
-										   8, 
-										   byte_count );
+	reply = extract_bytes_from_bytearray ( &bytes, 8, byte_count);
 
 	return reply;
 }
