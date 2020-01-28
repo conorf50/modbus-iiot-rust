@@ -3,9 +3,6 @@ use core::errortypes;
 //	===============================================================================================
 
 
-// custom error handling
-
-// see: https://stackoverflow.com/questions/51550167/how-to-manually-return-a-result-boxdyn-error
 
 pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result<SocketAddr, Box<dyn std::error::Error>>
 {
@@ -15,7 +12,7 @@ pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Re
     */
 
     // return an instance of a custom Error type defined in core/errortypes.rs
-
+    // see: https://stackoverflow.com/questions/51550167/how-to-manually-return-a-result-boxdyn-error
     if address_string.is_empty() {
         return Result::Err(Box::new(errortypes::NetParseErr()));
     }

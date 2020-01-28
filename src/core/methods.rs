@@ -1491,53 +1491,34 @@ fn test_verify_parameter_read_coils ()
 fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16 ) -> Result< bool, String >
 {
 	let mut reply : Result< bool, String > = Ok( false );
-
-	let address_good : bool = is_start_and_quantity_ok ( starting_address, 
-														 quantity_of_coils );
-
-	if address_good
-	{		
-	}
-	else
-	{
+	let address_good : bool = is_start_and_quantity_ok ( starting_address,quantity_of_coils);
+	if address_good{}
+	else {
 		reply = Err( "Error - range or starting_address and quantity_of_coils is over 65535.".to_string () );
 	}
-
 	let quantity_good : bool;
-
 	if address_good
 	{
-		if is_value_in_range ( quantity_of_coils, 
-							   0x0001, 
-							   0x07D0 )
-		{
+		if is_value_in_range ( quantity_of_coils,0x0001, 0x07D0 ) {
 			quantity_good = true ;
 		}
-		else
-		{
+		else {
 			quantity_good = false ;
-
-			if quantity_of_coils == 0x0000
-			{
+			if quantity_of_coils == 0x0000 {
 				reply = Err( "Error at parameter quantity_of_coils - value to low, must be over 1.".to_string () );
 			}
 
-			if quantity_of_coils > 0x07D0
-			{
+			if quantity_of_coils > 0x07D0 {
 				reply = Err( "Error at parameter quantity_of_coils - value to high, must be lower or equal 2000.".to_string () );
 			}
 		}
 	}
-	else
-	{
+	else {
 		quantity_good = false;
-	}
-
-	if address_good && quantity_good
-	{
+    }
+	if address_good && quantity_good {
 		reply = Ok( true );
 	}
-
 	return reply;
 }
 
