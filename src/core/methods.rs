@@ -75,7 +75,7 @@ fn test_create_request_read_discrete_inputs ()
 	let starting_address : u16 = 0x00FF;
 	let quantity_of_inputs : u16 = 0x000A;
 
-	let result : Result< ModbusTelegram, String > = create_request_read_discrete_inputs ( transaction_identifier,
+	let result : Result< ModbusTelegram, ModbusTelegramError > = create_request_read_discrete_inputs ( transaction_identifier,
 																						  unit_identifier,
 																						  starting_address,
 																						  quantity_of_inputs );
@@ -105,11 +105,11 @@ fn test_create_request_read_discrete_inputs ()
 	assert_eq! ( bytes[ 11 ], 0x0A );	//	quantity_of_inputs
 }
 
-pub fn create_request_read_discrete_inputs ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, quantity_of_inputs : u16 ) -> Result< ModbusTelegram, String >
+pub fn create_request_read_discrete_inputs ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, quantity_of_inputs : u16 ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
-	let reply : Result< ModbusTelegram, String >;
+	//let reply : Result< ModbusTelegram, String >;
 
-	let parameter_verification : Result< bool, String > = verify_parameter_read_discrete_inputs ( starting_address, 
+	let parameter_verification : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( starting_address, 
 																								  quantity_of_inputs );
 
 	if parameter_verification.is_ok ()
@@ -123,14 +123,14 @@ pub fn create_request_read_discrete_inputs ( transaction_identifier : u16, unit_
 																		&payload,
 																		get_expected_byte_count_read_discrete_inputs ( quantity_of_inputs ) );
 
-		reply = pack_telegram ( telegram );
+		return pack_telegram ( telegram );
 	}
 	else
 	{
-		reply = Err( parameter_verification.unwrap_err () );
+		return Result::Err(ModbusTelegramError{ message: "parameter_verification error".to_string() } );
 	}
 
-	return reply;
+	
 }
 
 //	===============================================================================================
@@ -175,10 +175,7 @@ fn test_create_request_read_holding_registers ()
 
 pub fn create_request_read_holding_registers ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, quantity_of_registers : u16 ) -> Result< ModbusTelegram, String >
 {
-	let reply : Result< ModbusTelegram, String >;
-
-	let parameter_verification : Result< bool, String > = verify_parameter_read_holding_registers ( starting_address, 
-																									quantity_of_registers );
+	let parameter_verification : Result< bool, String > = verify_parameter_read_holding_registers ( starting_address, quantity_of_registers );
 
 	if parameter_verification.is_ok ()
 	{
@@ -726,7 +723,7 @@ fn get_expected_byte_count_write_single_register () -> u8
 fn test_pack_telegram ()
 {
 	let test_data_1 : Option< ModbusTelegram > = None;
-	let result_1 : Result< ModbusTelegram, String > = pack_telegram ( test_data_1 );
+	let result_1 : Result< ModbusTelegram, _> = pack_telegram ( test_data_1 );
 	assert! ( result_1.is_err () );
 
 	let test_values : Vec< u8 > = vec![ 0; 10 ];
@@ -735,7 +732,7 @@ fn test_pack_telegram ()
 																	   0x01, 
 																	   &test_values, 
 																	   10 );
-	let result_2 : Result< ModbusTelegram, String > = pack_telegram ( test_data_2 );
+	let result_2 : Result< ModbusTelegram, ModbusTelegramError > = pack_telegram ( test_data_2 );
 	assert! ( result_2.is_ok () );
 }
 
@@ -1487,36 +1484,6 @@ fn test_verify_parameter_read_coils ()
 
 fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16 ) -> Result<bool,CoilOutOfBounds >
 {
-	// let mut reply : Result< bool, String > = Ok( false );
-	// let address_good : bool = is_start_and_quantity_ok ( starting_address,quantity_of_coils);
-	// if !address_good {
-	// 	reply = Err( "Error - range or starting_address and quantity_of_coils is over 65535.".to_string () );
-	// }
-	// let quantity_good : bool;
-	// if address_good
-	// {
-	// 	if is_value_in_range ( quantity_of_coils,0x0001, 0x07D0 ) {
-	// 		quantity_good = true ;
-	// 	}
-	// 	else {
-	// 		quantity_good = false ;
-	// 		if quantity_of_coils == 0x0000 {
-	// 			reply = Err( "Error at parameter quantity_of_coils - value to low, must be over 1.".to_string () );
-	// 		}
-
-	// 		if quantity_of_coils > 0x07D0 {
-	// 			reply = Err( "Error at parameter quantity_of_coils - value to high, must be lower or equal 2000.".to_string () );
-	// 		}
-	// 	}
-	// }
-	// else {
-	// 	quantity_good = false;
-    // }
-	// if address_good && quantity_good {
-	// 	reply = Ok( true );
-	// }
-	// return reply;
-
 	let mut reply: bool = false;
 
 	let mut address_good: bool = is_start_and_quantity_ok(starting_address,quantity_of_coils);
@@ -1556,64 +1523,55 @@ fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16
 #[test]
 fn test_verify_parameter_read_discrete_inputs ()
 {
-	let result_1 : Result< bool, String > = verify_parameter_read_discrete_inputs ( 0x0000, 
+	let result_1 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0x0000, 
 																					0x0001 );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, String > = verify_parameter_read_discrete_inputs ( 0x0000, 
+	let result_2 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0x0000, 
 																					0x07D0 );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, String > = verify_parameter_read_discrete_inputs ( 0x0000, 
+	let result_3 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0x0000, 
 																					0x0000 );
 	assert! ( result_3.is_err () );
 
-	let result_4 : Result< bool, String > = verify_parameter_read_discrete_inputs ( 0x0000, 
+	let result_4 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0x0000, 
 																					0x07D1 );
 	assert! ( result_4.is_err () );
 
-	let result_5 : Result< bool, String > = verify_parameter_read_discrete_inputs ( 0xFFFE, 
+	let result_5 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0xFFFE, 
 																					0x000F );
 	assert! ( result_5.is_err () );
 }
 
-fn verify_parameter_read_discrete_inputs ( starting_address : u16, quantity_of_inputs : u16 ) -> Result< bool, String >
+fn verify_parameter_read_discrete_inputs ( starting_address : u16, quantity_of_inputs : u16 ) -> Result< bool, CoilOutOfBounds >
 {
-	let mut reply : Result< bool, String > = Ok( false );
+	let mut reply : bool = false;
+	let mut address_good : bool = is_start_and_quantity_ok ( starting_address, quantity_of_inputs );
 
-	let address_good : bool = is_start_and_quantity_ok ( starting_address, 
-														 quantity_of_inputs );
-
-	if address_good
-	{		
+	if !address_good{
+		return Result::Err(CoilOutOfBounds { message: "Error - range or starting_address and quantity_of_inputs is over 65535.".to_string ()})		
 	}
-	else
-	{
-		reply = Err( "Error - range or starting_address and quantity_of_inputs is over 65535.".to_string () );
-	}
-
 	let quantity_good : bool;
 
 	if address_good
 	{
-		if is_value_in_range ( quantity_of_inputs, 
-							   0x0001, 
-							   0x07D0 )
-		{
+		if is_value_in_range ( quantity_of_inputs, 0x0001, 0x07D0 ) {
 			quantity_good = true ;
 		}
+
 		else
 		{
 			quantity_good = false ;
 
 			if quantity_of_inputs == 0x0000
 			{
-				reply = Err( "Error at parameter quantity_of_inputs - value to low, must be over 1.".to_string () );
+				return Result::Err( CoilOutOfBounds { message: "Error at parameter quantity_of_inputs - value is too low (must be > 1)".to_string() });
 			}
 
 			if quantity_of_inputs > 0x07D0
 			{
-				reply = Err( "Error at parameter quantity_of_inputs - value to high, must be lower or equal 2000.".to_string () );
+				return Result::Err( CoilOutOfBounds{ message: "Error at parameter quantity_of_inputs - value is too high (must be lower than or equal to 2000).".to_string() });
 			}
 		}
 	}
@@ -1624,10 +1582,10 @@ fn verify_parameter_read_discrete_inputs ( starting_address : u16, quantity_of_i
 
 	if address_good && quantity_good
 	{
-		reply = Ok( true );
+		reply = true;
 	}
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
@@ -1635,64 +1593,52 @@ fn verify_parameter_read_discrete_inputs ( starting_address : u16, quantity_of_i
 #[test]
 fn test_verify_parameter_read_holding_registers ()
 {
-	let result_1 : Result< bool, String > = verify_parameter_read_holding_registers ( 0x0000, 
+	let result_1 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0x0000, 
 																					  0x0001 );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, String > = verify_parameter_read_holding_registers ( 0x0000, 
+	let result_2 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0x0000, 
 																					  0x007D );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, String > = verify_parameter_read_holding_registers ( 0x0000, 
+	let result_3 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0x0000, 
 																					  0x0000 );
 	assert! ( result_3.is_err () );
 
-	let result_4 : Result< bool, String > = verify_parameter_read_holding_registers ( 0x0000, 
+	let result_4 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0x0000, 
 																					  0x007E );
 	assert! ( result_4.is_err () );
 
-	let result_5 : Result< bool, String > = verify_parameter_read_holding_registers ( 0xFFFE, 
+	let result_5 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0xFFFE, 
 																					  0x000F );
 	assert! ( result_5.is_err () );
 }
 
-fn verify_parameter_read_holding_registers ( starting_address : u16, quantity_of_registers : u16 ) -> Result< bool, String >
+fn verify_parameter_read_holding_registers ( starting_address : u16, quantity_of_registers : u16 ) -> Result< bool, CoilOutOfBounds >
 {
-	let mut reply : Result< bool, String > = Ok( false );
+	let mut reply: bool = false;
 
-	let address_good : bool = is_start_and_quantity_ok ( starting_address, 
-														 quantity_of_registers );
+	let address_good : bool = is_start_and_quantity_ok ( starting_address, quantity_of_registers );
 
-	if address_good
-	{		
-	}
-	else
-	{
-		reply = Err( "Error - range or starting_address and quantity_of_registers is over 65535.".to_string () );
+	if !address_good {	
+		return Result::Err(CoilOutOfBounds{message: "Error - range or starting_address and quantity_of_registers is over 65535.".to_string () })
 	}
 
 	let quantity_good : bool;
 
-	if address_good
-	{
-		if is_value_in_range ( quantity_of_registers, 
-							   0x0001, 
-							   0x007D )
-		{
+	if address_good {
+		if is_value_in_range ( quantity_of_registers, 0x0001, 0x007D) {
 			quantity_good = true ;
 		}
-		else
-		{
+		else {
 			quantity_good = false ;
 
-			if quantity_of_registers == 0x0000
-			{
-				reply = Err( "Error at parameter quantity_of_registers - value to low, must be over 1.".to_string () );
+			if quantity_of_registers == 0x0000 {
+				return Result::Err(CoilOutOfBounds{message: "Error at parameter quantity_of_registers - value is too low (must be > 1)".to_string ()});
 			}
 
-			if quantity_of_registers > 0x007D
-			{
-				reply = Err( "Error at parameter quantity_of_registers - value to high, must be lower or equal 125.".to_string () );
+			if quantity_of_registers > 0x007D {
+				return Result::Err(CoilOutOfBounds{message:"Error at parameter quantity_of_registers - value is too high (must be lower or equal to 125)".to_string()} );
 			}
 		}
 	}
@@ -1703,10 +1649,10 @@ fn verify_parameter_read_holding_registers ( starting_address : u16, quantity_of
 
 	if address_good && quantity_good
 	{
-		reply = Ok( true );
+		reply = true;
 	}
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
