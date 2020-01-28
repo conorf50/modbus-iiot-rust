@@ -22,3 +22,19 @@ impl fmt::Display for ZeroPortErr {
     }
 }
 impl std::error::Error for ZeroPortErr{}
+
+
+// Error for a coil index which is out of bounds
+// Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
+#[derive(Debug)]
+pub struct CoilOutOfBounds{
+    message: String
+}
+
+// Using this, we can call the same error with different messages to display to the end-user
+impl fmt::Display for CoilOutOfBounds {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+impl std::error::Error for CoilOutOfBounds{}
