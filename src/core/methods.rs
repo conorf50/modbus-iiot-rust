@@ -15,7 +15,7 @@ fn test_create_request_read_coils ()
 	let starting_address : u16 = 0x00FF;
 	let quantity_of_coils : u16 = 0x000A;
 
-	let result : Result< ModbusTelegram, String > = create_request_read_coils ( transaction_identifier,
+	let result : Result< ModbusTelegram, ModbusTelegramError > = create_request_read_coils ( transaction_identifier,
 																				unit_identifier,
 																				starting_address,
 																				quantity_of_coils );
@@ -46,32 +46,23 @@ fn test_create_request_read_coils ()
 	assert_eq! ( bytes[ 11 ], 0x0A );	//	quantity_of_coils
 }
 
-pub fn create_request_read_coils ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, quantity_of_coils : u16 ) -> Result< ModbusTelegram, String >
+pub fn create_request_read_coils ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, quantity_of_coils : u16 ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
-	let reply : Result< ModbusTelegram, String >;
+	let parameter_verification : Result< bool, CoilOutOfBounds > = verify_parameter_read_coils (starting_address,quantity_of_coils);
 
-	let parameter_verification : Result< bool, String > = verify_parameter_read_coils ( starting_address, 
-																						quantity_of_coils );
-
-	if parameter_verification.is_ok ()
-	{
-		let payload : Vec< u8 > = prepare_payload_read_coils ( starting_address, 
-															   quantity_of_coils );
-
+	if parameter_verification.is_ok() {
+		let payload : Vec< u8 > = prepare_payload_read_coils ( starting_address, quantity_of_coils );
 		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
 										    							unit_identifier,
 																		FUNCTION_CODE_READ_COILS,
 																		&payload,
 																		get_expected_byte_count_read_coils ( quantity_of_coils ) );
-
-		reply = pack_telegram ( telegram );
+		
+		return pack_telegram(telegram);
 	}
-	else
-	{
-		reply = Err( parameter_verification.unwrap_err () );
+	else {
+		return Result::Err(ModbusTelegramError{message: "Could not create telegram".to_string() } );
 	}
-
-	return reply;
 }
 
 //	===============================================================================================
@@ -748,9 +739,9 @@ fn test_pack_telegram ()
 	assert! ( result_2.is_ok () );
 }
 
-fn pack_telegram ( telegram : Option< ModbusTelegram > ) -> Result< ModbusTelegram, String >
+fn pack_telegram ( telegram : Option< ModbusTelegram > ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
-	let reply : Result< ModbusTelegram, String >;
+	let reply : Result< ModbusTelegram, ModbusTelegramError>;
 
 	if telegram.is_some ()
 	{
@@ -758,7 +749,7 @@ fn pack_telegram ( telegram : Option< ModbusTelegram > ) -> Result< ModbusTelegr
 	}
 	else
 	{
-		reply = Err( "Error while creating telegram.".to_string () );
+		return Result::Err(ModbusTelegramError{ message: "Error while creating telegram".to_string() } );
 	}
 
 	return reply;
@@ -1468,23 +1459,23 @@ fn is_value_in_range ( value : u16, min_value : u16, max_value : u16 ) -> bool
 #[test]
 fn test_verify_parameter_read_coils ()
 {
-	let result_1 : Result< bool, String > = verify_parameter_read_coils ( 0x0000, 
+	let result_1 : Result< bool, CoilOutOfBounds > = verify_parameter_read_coils ( 0x0000, 
 																		  0x0001 );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, String > = verify_parameter_read_coils ( 0x0000, 
+	let result_2 : Result< bool, CoilOutOfBounds > = verify_parameter_read_coils ( 0x0000, 
 																		  0x07D0 );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, String > = verify_parameter_read_coils ( 0x0000, 
+	let result_3 : Result< bool, CoilOutOfBounds > = verify_parameter_read_coils ( 0x0000, 
 																		  0x0000 );
 	assert! ( result_3.is_err () );
 
-	let result_4 : Result< bool, String > = verify_parameter_read_coils ( 0x0000, 
+	let result_4 : Result< bool, CoilOutOfBounds > = verify_parameter_read_coils ( 0x0000, 
 																		  0x07D1 );
 	assert! ( result_4.is_err () );
 
-	let result_5 : Result< bool, String > = verify_parameter_read_coils ( 0xFFFE, 
+	let result_5 : Result< bool, CoilOutOfBounds > = verify_parameter_read_coils ( 0xFFFE, 
 																		  0x000F );
 	assert! ( result_5.is_err () );
 }
@@ -1494,7 +1485,7 @@ fn test_verify_parameter_read_coils ()
 
 
 
-fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16 ) -> Result< bool, CoilOutOfBounds >
+fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16 ) -> Result<bool,CoilOutOfBounds >
 {
 	// let mut reply : Result< bool, String > = Ok( false );
 	// let address_good : bool = is_start_and_quantity_ok ( starting_address,quantity_of_coils);
@@ -1526,11 +1517,14 @@ fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16
 	// }
 	// return reply;
 
-	let mut reply : Result< bool, CoilOutOfBounds > = Ok( false );
-	let address_good : bool = is_start_and_quantity_ok( starting_address,quantity_of_coils);
+	let mut reply: bool = false;
+
+	let mut address_good: bool = is_start_and_quantity_ok(starting_address,quantity_of_coils);
+	
 	if !address_good {
-		reply = errortypes::CoilOutOfBounds();
+		return Result::Err(CoilOutOfBounds{ message: "Error - range or starting_address and quantity_of_coils is over 65535.".to_string() }); 
 	}
+
 	let quantity_good : bool;
 	if address_good
 	{
@@ -1540,11 +1534,11 @@ fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16
 		else {
 			quantity_good = false ;
 			if quantity_of_coils == 0x0000 {
-				reply = Err( "Error at parameter quantity_of_coils - value to low, must be over 1.".to_string () );
+				return Result::Err(CoilOutOfBounds{message: "Error at parameter quantity_of_coils - value to low, must be over 1.".to_string () });
 			}
 
 			if quantity_of_coils > 0x07D0 {
-				reply = Err( "Error at parameter quantity_of_coils - value to high, must be lower or equal 2000.".to_string () );
+				return Result::Err(CoilOutOfBounds{ message: "Error at parameter quantity_of_coils - value to high, must be lower or equal 2000.".to_string ()});
 			}
 		}
 	}
@@ -1552,9 +1546,9 @@ fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16
 		quantity_good = false;
     }
 	if address_good && quantity_good {
-		reply = Ok( true );
+		reply = true;
 	}
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
