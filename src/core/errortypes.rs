@@ -38,3 +38,18 @@ impl fmt::Display for CoilOutOfBounds {
     }
 }
 impl std::error::Error for CoilOutOfBounds{}
+
+// ModbusTelegramError
+// Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
+#[derive(Debug)]
+pub struct ModbusTelegramError{
+    message: String
+}
+
+// Using this, we can call the same error with different messages to display to the end-user
+impl fmt::Display for ModbusTelegramError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+impl std::error::Error for ModbusTelegramError{}
