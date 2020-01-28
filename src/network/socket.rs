@@ -1,30 +1,11 @@
 use std::net::{IpAddr, SocketAddr};
-use std::fmt;
+use core::errortypes;
 //	===============================================================================================
 
 
 // custom error handling
 
 // see: https://stackoverflow.com/questions/51550167/how-to-manually-return-a-result-boxdyn-error
-
-#[derive(Debug)]
-struct NetParseErr();
-impl fmt::Display for NetParseErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "There is an error: {}", self)
-    }
-}
-impl std::error::Error for NetParseErr{}
-
-// another custom error for a zero port
-#[derive(Debug)]
-struct ZeroPortErr();
-impl fmt::Display for ZeroPortErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Port number cannot be zero: {}", self)
-    }
-}
-impl std::error::Error for ZeroPortErr{}
 
 pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Result<SocketAddr, Box<dyn std::error::Error>>
 {
@@ -33,14 +14,14 @@ pub fn parse_network_address ( address_string : &str, default_port : u16 ) -> Re
         port number to it
     */
 
-    // return an instance of a custom Error type defined above
+    // return an instance of a custom Error type defined in core/errortypes.rs
 
     if address_string.is_empty() {
-        return Result::Err(Box::new(NetParseErr()));
+        return Result::Err(Box::new(errortypes::NetParseErr()));
     }
 
     if default_port == 0x0000 || default_port == 0 {
-        return Result::Err(Box::new(ZeroPortErr()));
+        return Result::Err(Box::new(errortypes::ZeroPortErr()));
     }
 
     else{    
