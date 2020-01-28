@@ -27,17 +27,17 @@ impl std::error::Error for ZeroPortErr{}
 // Error for a coil index which is out of bounds
 // Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
 #[derive(Debug)]
-pub struct CoilOutOfBounds{
+pub struct CoilError{
     message: String
 }
 
 // Using this, we can call the same error with different messages to display to the end-user
-impl fmt::Display for CoilOutOfBounds {
+impl fmt::Display for CoilError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.message)
     }
 }
-impl std::error::Error for CoilOutOfBounds{}
+impl std::error::Error for CoilError{}
 
 // ModbusTelegramError
 // Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
@@ -53,3 +53,19 @@ impl fmt::Display for ModbusTelegramError {
     }
 }
 impl std::error::Error for ModbusTelegramError{}
+
+
+// Generic error for a register
+// Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
+#[derive(Debug)]
+pub struct RegisterError{
+    message: String
+}
+
+// Using this, we can call the same error with different messages to display to the end-user
+impl fmt::Display for RegisterError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+impl std::error::Error for RegisterError{}

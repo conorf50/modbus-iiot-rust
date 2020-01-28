@@ -48,7 +48,7 @@ fn test_create_request_read_coils ()
 
 pub fn create_request_read_coils ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, quantity_of_coils : u16 ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
-	let parameter_verification : Result< bool, CoilOutOfBounds > = verify_parameter_read_coils (starting_address,quantity_of_coils);
+	let parameter_verification : Result< bool, CoilError > = verify_parameter_read_coils (starting_address,quantity_of_coils);
 
 	if parameter_verification.is_ok() {
 		let payload : Vec< u8 > = prepare_payload_read_coils ( starting_address, quantity_of_coils );
@@ -109,7 +109,7 @@ pub fn create_request_read_discrete_inputs ( transaction_identifier : u16, unit_
 {
 	//let reply : Result< ModbusTelegram, String >;
 
-	let parameter_verification : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( starting_address, 
+	let parameter_verification : Result< bool, RegisterError > = verify_parameter_read_discrete_inputs ( starting_address, 
 																								  quantity_of_inputs );
 
 	if parameter_verification.is_ok ()
@@ -175,7 +175,7 @@ fn test_create_request_read_holding_registers ()
 
 pub fn create_request_read_holding_registers ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, quantity_of_registers : u16 ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
-	let parameter_verification : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( starting_address, quantity_of_registers );
+	let parameter_verification : Result< bool, RegisterError > = verify_parameter_read_holding_registers ( starting_address, quantity_of_registers );
 
 	if parameter_verification.is_ok ()
 	{
@@ -240,7 +240,7 @@ pub fn create_request_read_input_registers ( transaction_identifier : u16, unit_
 {
 	//let reply : Result< ModbusTelegram, String >;
 
-	let parameter_verification : Result< bool, CoilOutOfBounds > = verify_parameter_read_input_registers ( starting_address, quantity_of_input_registers );
+	let parameter_verification : Result< bool, RegisterError > = verify_parameter_read_input_registers ( starting_address, quantity_of_input_registers );
 
 	if parameter_verification.is_ok ()
 	{
@@ -272,7 +272,7 @@ fn test_create_request_write_multiple_coils ()
 	let quantity_of_outputs : u16 = 18;
 	let output_values : Vec< u8 > = vec![ 0xFF, 0xF0, 0x02 ];
 
-	let result : Result< ModbusTelegram, String > = create_request_write_multiple_coils ( transaction_identifier,
+	let result : Result< ModbusTelegram, ModbusTelegramError > = create_request_write_multiple_coils ( transaction_identifier,
 																						  unit_identifier,
 																						  starting_address, 
 																						  quantity_of_outputs,
@@ -310,7 +310,7 @@ fn test_create_request_write_multiple_coils ()
 pub fn create_request_write_multiple_coils ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, quantity_of_outputs : u16, output_values : Vec< u8 > ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
 
-	let parameter_verification : Result< bool, CoilOutOfBounds > = verify_parameter_write_multiple_coils ( starting_address, 
+	let parameter_verification : Result< bool, CoilError > = verify_parameter_write_multiple_coils ( starting_address, 
 																								  quantity_of_outputs );
 	if parameter_verification.is_ok ()
 	{
@@ -342,7 +342,7 @@ fn test_create_request_write_multiple_registers ()
 	let starting_address : u16 = 0x00FF;
 	let register_values : Vec< u16 > = vec![ 0x00FF, 0xF00F, 0x010A, 0xABCD ];
 
-	let result : Result< ModbusTelegram, String > = create_request_write_multiple_registers ( transaction_identifier,
+	let result : Result< ModbusTelegram, ModbusTelegramError > = create_request_write_multiple_registers ( transaction_identifier,
 																							  unit_identifier,
 																							  starting_address, 
 																							  register_values );
@@ -381,13 +381,10 @@ fn test_create_request_write_multiple_registers ()
 	assert_eq! ( bytes[ 20 ], 0xCD );	//	register_value
 }
 
-pub fn create_request_write_multiple_registers ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, register_values : Vec< u16 > ) -> Result< ModbusTelegram, String >
+pub fn create_request_write_multiple_registers ( transaction_identifier : u16, unit_identifier : u8, starting_address : u16, register_values : Vec< u16 > ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
-	let reply : Result< ModbusTelegram, String >;
-
 	let quantity_of_registers : u16 = register_values.len () as u16;
-	let parameter_verification : Result< bool, String > = verify_parameter_write_multiple_registers ( starting_address, 
-																									  quantity_of_registers );
+	let parameter_verification : Result< bool, RegisterError > = verify_parameter_write_multiple_registers ( starting_address, quantity_of_registers );
 
 	if parameter_verification.is_ok ()
 	{
@@ -400,14 +397,11 @@ pub fn create_request_write_multiple_registers ( transaction_identifier : u16, u
 																		&payload,
 																		get_expected_byte_count_write_multiple_registers () );
 
-		reply = pack_telegram ( telegram );
+		return pack_telegram ( telegram );
 	}
-	else
-	{
-		reply = Err( parameter_verification.unwrap_err () );
+	else {
+		return Result::Err(ModbusTelegramError{message: "Could not write multiple registers".to_string() } );
 	}
-
-	return reply;
 }
 
 //	===============================================================================================
@@ -420,7 +414,7 @@ fn test_create_request_write_single_coil ()
 	let output_address : u16 = 0x00FF;
 	let output_value : u16 = 0xFF00;
 
-	let result : Result< ModbusTelegram, String > = create_request_write_single_coil ( transaction_identifier,
+	let result : Result< ModbusTelegram, ModbusTelegramError > = create_request_write_single_coil ( transaction_identifier,
 																					   unit_identifier,
 																					   output_address,
 																					   output_value );
@@ -450,11 +444,11 @@ fn test_create_request_write_single_coil ()
 	assert_eq! ( bytes[ 11 ], 0x00 );	//	output_value
 }
 
-pub fn create_request_write_single_coil ( transaction_identifier : u16, unit_identifier : u8, output_address : u16, output_value : u16 ) -> Result< ModbusTelegram, String >
+pub fn create_request_write_single_coil ( transaction_identifier : u16, unit_identifier : u8, output_address : u16, output_value : u16 ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
-	let reply : Result< ModbusTelegram, String >;
+	let reply : Result< ModbusTelegram, CoilError >;
 
-	let parameter_verification : Result< bool, String > = verify_parameter_write_single_coil ( output_value );
+	let parameter_verification : Result< bool, CoilError > = verify_parameter_write_single_coil ( output_value );
 
 	if parameter_verification.is_ok ()
 	{
@@ -467,14 +461,12 @@ pub fn create_request_write_single_coil ( transaction_identifier : u16, unit_ide
 																		&payload,
 																		get_expected_byte_count_write_single_coil () );
 
-		reply = pack_telegram ( telegram );
+		return  pack_telegram ( telegram );
 	}
 	else
 	{
-		reply = Err( parameter_verification.unwrap_err () );
+		return Result::Err(ModbusTelegramError{message: "Could not create telegram".to_string() } );
 	}
-
-	return reply;
 }
 
 //	===============================================================================================
@@ -517,10 +509,8 @@ fn test_create_request_write_single_register ()
 	assert_eq! ( bytes[ 11 ], 0xF0 );	//	register_value	
 }
 
-pub fn create_request_write_single_register ( transaction_identifier : u16, unit_identifier : u8, register_address : u16, register_value : u16 ) -> Result< ModbusTelegram, String >
+pub fn create_request_write_single_register ( transaction_identifier : u16, unit_identifier : u8, register_address : u16, register_value : u16 ) -> Result< ModbusTelegram, ModbusTelegramError >
 {	
-	let reply : Result< ModbusTelegram, String >;
-
 	let parameter_verification : Result< bool, String > = verify_parameter_write_single_register ();
 
 	if parameter_verification.is_ok ()
@@ -1514,34 +1504,34 @@ fn verify_parameter_read_coils ( starting_address : u16, quantity_of_coils : u16
 #[test]
 fn test_verify_parameter_read_discrete_inputs ()
 {
-	let result_1 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0x0000, 
+	let result_1 : Result< bool, RegisterError > = verify_parameter_read_discrete_inputs ( 0x0000, 
 																					0x0001 );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0x0000, 
+	let result_2 : Result< bool, RegisterError > = verify_parameter_read_discrete_inputs ( 0x0000, 
 																					0x07D0 );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0x0000, 
+	let result_3 : Result< bool, RegisterError > = verify_parameter_read_discrete_inputs ( 0x0000, 
 																					0x0000 );
 	assert! ( result_3.is_err () );
 
-	let result_4 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0x0000, 
+	let result_4 : Result< bool, RegisterError > = verify_parameter_read_discrete_inputs ( 0x0000, 
 																					0x07D1 );
 	assert! ( result_4.is_err () );
 
-	let result_5 : Result< bool, CoilOutOfBounds > = verify_parameter_read_discrete_inputs ( 0xFFFE, 
+	let result_5 : Result< bool, RegisterError > = verify_parameter_read_discrete_inputs ( 0xFFFE, 
 																					0x000F );
 	assert! ( result_5.is_err () );
 }
 
-fn verify_parameter_read_discrete_inputs ( starting_address : u16, quantity_of_inputs : u16 ) -> Result< bool, CoilOutOfBounds >
+fn verify_parameter_read_discrete_inputs ( starting_address : u16, quantity_of_inputs : u16 ) -> Result< bool, RegisterError >
 {
 	let mut reply : bool = false;
 	let mut address_good : bool = is_start_and_quantity_ok ( starting_address, quantity_of_inputs );
 
 	if !address_good{
-		return Result::Err(CoilOutOfBounds { message: "Error - range or starting_address and quantity_of_inputs is over 65535.".to_string ()})		
+		return Result::Err(RegisterError { message: "Error - range or starting_address and quantity_of_inputs is over 65535.".to_string ()})		
 	}
 	let quantity_good : bool;
 
@@ -1557,12 +1547,12 @@ fn verify_parameter_read_discrete_inputs ( starting_address : u16, quantity_of_i
 
 			if quantity_of_inputs == 0x0000
 			{
-				return Result::Err( CoilOutOfBounds { message: "Error at parameter quantity_of_inputs - value is too low (must be > 1)".to_string() });
+				return Result::Err( RegisterError { message: "Error at parameter quantity_of_inputs - value is too low (must be > 1)".to_string() });
 			}
 
 			if quantity_of_inputs > 0x07D0
 			{
-				return Result::Err( CoilOutOfBounds{ message: "Error at parameter quantity_of_inputs - value is too high (must be lower than or equal to 2000).".to_string() });
+				return Result::Err( RegisterError{ message: "Error at parameter quantity_of_inputs - value is too high (must be lower than or equal to 2000).".to_string() });
 			}
 		}
 	}
@@ -1584,35 +1574,35 @@ fn verify_parameter_read_discrete_inputs ( starting_address : u16, quantity_of_i
 #[test]
 fn test_verify_parameter_read_holding_registers ()
 {
-	let result_1 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0x0000, 
+	let result_1 : Result< bool, RegisterError > = verify_parameter_read_holding_registers ( 0x0000, 
 																					  0x0001 );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0x0000, 
+	let result_2 : Result< bool, RegisterError > = verify_parameter_read_holding_registers ( 0x0000, 
 																					  0x007D );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0x0000, 
+	let result_3 : Result< bool, RegisterError > = verify_parameter_read_holding_registers ( 0x0000, 
 																					  0x0000 );
 	assert! ( result_3.is_err () );
 
-	let result_4 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0x0000, 
+	let result_4 : Result< bool, RegisterError > = verify_parameter_read_holding_registers ( 0x0000, 
 																					  0x007E );
 	assert! ( result_4.is_err () );
 
-	let result_5 : Result< bool, CoilOutOfBounds > = verify_parameter_read_holding_registers ( 0xFFFE, 
+	let result_5 : Result< bool, RegisterError > = verify_parameter_read_holding_registers ( 0xFFFE, 
 																					  0x000F );
 	assert! ( result_5.is_err () );
 }
 
-fn verify_parameter_read_holding_registers ( starting_address : u16, quantity_of_registers : u16 ) -> Result< bool, CoilOutOfBounds >
+fn verify_parameter_read_holding_registers ( starting_address : u16, quantity_of_registers : u16 ) -> Result< bool, RegisterError >
 {
 	let mut reply: bool = false;
 
 	let address_good : bool = is_start_and_quantity_ok ( starting_address, quantity_of_registers );
 
 	if !address_good {	
-		return Result::Err(CoilOutOfBounds{message: "Error - range or starting_address and quantity_of_registers is over 65535.".to_string () })
+		return Result::Err(RegisterError{message: "Error - range or starting_address and quantity_of_registers is over 65535.".to_string () })
 	}
 
 	let quantity_good : bool;
@@ -1625,11 +1615,11 @@ fn verify_parameter_read_holding_registers ( starting_address : u16, quantity_of
 			quantity_good = false ;
 
 			if quantity_of_registers == 0x0000 {
-				return Result::Err(CoilOutOfBounds{message: "Error at parameter quantity_of_registers - value is too low (must be > 1)".to_string ()});
+				return Result::Err(RegisterError{message: "Error at parameter quantity_of_registers - value is too low (must be > 1)".to_string ()});
 			}
 
 			if quantity_of_registers > 0x007D {
-				return Result::Err(CoilOutOfBounds{message:"Error at parameter quantity_of_registers - value is too high (must be lower or equal to 125)".to_string()} );
+				return Result::Err(RegisterError{message:"Error at parameter quantity_of_registers - value is too high (must be lower or equal to 125)".to_string()} );
 			}
 		}
 	}
@@ -1651,35 +1641,35 @@ fn verify_parameter_read_holding_registers ( starting_address : u16, quantity_of
 #[test]
 fn test_verify_parameter_read_input_registers ()
 {
-	let result_1 : Result< bool, CoilOutOfBounds > = verify_parameter_read_input_registers ( 0x0000, 
+	let result_1 : Result< bool, RegisterError > = verify_parameter_read_input_registers ( 0x0000, 
 																					0x0001 );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, CoilOutOfBounds > = verify_parameter_read_input_registers ( 0x0000, 
+	let result_2 : Result< bool, RegisterError > = verify_parameter_read_input_registers ( 0x0000, 
 																					0x007D );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, CoilOutOfBounds > = verify_parameter_read_input_registers ( 0x0000, 
+	let result_3 : Result< bool, RegisterError > = verify_parameter_read_input_registers ( 0x0000, 
 																					0x0000 );
 	assert! ( result_3.is_err () );
 
-	let result_4 : Result< bool, CoilOutOfBounds > = verify_parameter_read_input_registers ( 0x0000, 
+	let result_4 : Result< bool, RegisterError > = verify_parameter_read_input_registers ( 0x0000, 
 																					0x007E );
 	assert! ( result_4.is_err () );
 
-	let result_5 : Result< bool, CoilOutOfBounds > = verify_parameter_read_input_registers ( 0xFFFE, 
+	let result_5 : Result< bool, RegisterError > = verify_parameter_read_input_registers ( 0xFFFE, 
 																					0x000F );
 	assert! ( result_5.is_err () );
 }
 
-fn verify_parameter_read_input_registers ( starting_address : u16, quantity_of_input_registers : u16 ) -> Result< bool, CoilOutOfBounds >
+fn verify_parameter_read_input_registers ( starting_address : u16, quantity_of_input_registers : u16 ) -> Result< bool, RegisterError >
 {
 	let mut reply : bool = false;
 
 	let address_good : bool = is_start_and_quantity_ok ( starting_address, quantity_of_input_registers );
 
 	if !address_good {		
-		return Result::Err(CoilOutOfBounds{ message: "Error - range or starting_address and quantity_of_input_registers is over 65535.".to_string() }); 
+		return Result::Err(RegisterError{ message: "Error - range or starting_address and quantity_of_input_registers is over 65535.".to_string() }); 
 	}
 	
 	let quantity_good : bool;
@@ -1694,12 +1684,12 @@ fn verify_parameter_read_input_registers ( starting_address : u16, quantity_of_i
 
 			if quantity_of_input_registers == 0x0000
 			{
-				return Result::Err( CoilOutOfBounds{message: "Error at parameter quantity_of_input_registers - value to low, must be over 1.".to_string ()});
+				return Result::Err( RegisterError{message: "Error at parameter quantity_of_input_registers - value to low, must be over 1.".to_string ()});
 			}
 
 			if quantity_of_input_registers > 0x007D
 			{
-				return Result::Err( CoilOutOfBounds{ message: "Error at parameter quantity_of_input_registers - value to high, must be lower or equal 125.".to_string () });
+				return Result::Err( RegisterError{ message: "Error at parameter quantity_of_input_registers - value to high, must be lower or equal 125.".to_string () });
 			}
 		}
 	}
@@ -1719,35 +1709,35 @@ fn verify_parameter_read_input_registers ( starting_address : u16, quantity_of_i
 #[test]
 fn test_verify_parameter_write_multiple_coils ()
 {
-	let result_1 : Result< bool, CoilOutOfBounds > = verify_parameter_write_multiple_coils ( 0x0000, 
+	let result_1 : Result< bool, CoilError > = verify_parameter_write_multiple_coils ( 0x0000, 
 																					0x0001 );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, CoilOutOfBounds > = verify_parameter_write_multiple_coils ( 0x0000, 
+	let result_2 : Result< bool, CoilError > = verify_parameter_write_multiple_coils ( 0x0000, 
 																					0x07B0 );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, CoilOutOfBounds > = verify_parameter_write_multiple_coils ( 0x0000, 
+	let result_3 : Result< bool, CoilError > = verify_parameter_write_multiple_coils ( 0x0000, 
 																					0x0000 );
 	assert! ( result_3.is_err () );
 
-	let result_4 : Result< bool, CoilOutOfBounds > = verify_parameter_write_multiple_coils ( 0x0000, 
+	let result_4 : Result< bool, CoilError > = verify_parameter_write_multiple_coils ( 0x0000, 
 																					0x07B1 );
 	assert! ( result_4.is_err (), );
 
-	let result_5 : Result< bool, CoilOutOfBounds > = verify_parameter_write_multiple_coils ( 0xFFFE, 
+	let result_5 : Result< bool, CoilError > = verify_parameter_write_multiple_coils ( 0xFFFE, 
 																					0x000F );
 	assert! ( result_5.is_err () );	
 }
 
-fn verify_parameter_write_multiple_coils ( starting_address : u16, quantity_of_output_values : u16 ) -> Result< bool, CoilOutOfBounds >
+fn verify_parameter_write_multiple_coils ( starting_address : u16, quantity_of_output_values : u16 ) -> Result< bool, CoilError >
 {
 	let mut reply: bool = false;
 
 	let address_good : bool = is_start_and_quantity_ok( starting_address, quantity_of_output_values );
 
 	if !address_good {	
-		return Result::Err(CoilOutOfBounds{ message: "Error - range or starting_address and quantity_of_output_values is over 65535.".to_string() }); 
+		return Result::Err(CoilError{ message: "Error - range or starting_address and quantity_of_output_values is over 65535.".to_string() }); 
 	}
 
 	let quantity_good : bool;
@@ -1761,12 +1751,12 @@ fn verify_parameter_write_multiple_coils ( starting_address : u16, quantity_of_o
 
 			if quantity_of_output_values == 0x0000
 			{
-				return Result::Err(CoilOutOfBounds{message: "Error at parameter quantity_of_output_values - value to low, must be over 1.".to_string () });
+				return Result::Err(CoilError{message: "Error at parameter quantity_of_output_values - value to low, must be over 1.".to_string () });
 			}
 
 			if quantity_of_output_values > 0x07B0
 			{
-				return Result::Err(CoilOutOfBounds{ message: "Error at parameter quantity_of_output_values - value to high, must be lower or equal 1968.".to_string ()});
+				return Result::Err(CoilError{ message: "Error at parameter quantity_of_output_values - value to high, must be lower or equal 1968.".to_string ()});
 			}
 		}
 	}
@@ -1786,65 +1776,52 @@ fn verify_parameter_write_multiple_coils ( starting_address : u16, quantity_of_o
 #[test]
 fn test_verify_parameter_write_multiple_registers ()
 {
-	let result_1 : Result< bool, String > = verify_parameter_write_multiple_registers ( 0x0000, 
+	let result_1 : Result< bool, RegisterError > = verify_parameter_write_multiple_registers ( 0x0000, 
 																						0x000F );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, String > = verify_parameter_write_multiple_registers ( 0x0000, 
+	let result_2 : Result< bool, RegisterError > = verify_parameter_write_multiple_registers ( 0x0000, 
 																						0x007B );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, String > = verify_parameter_write_multiple_registers ( 0x0000, 
+	let result_3 : Result< bool, RegisterError > = verify_parameter_write_multiple_registers ( 0x0000, 
 																						0x0000 );
 	assert! ( result_3.is_err () );
 
-	let result_4 : Result< bool, String > = verify_parameter_write_multiple_registers ( 0x0000, 
+	let result_4 : Result< bool, RegisterError > = verify_parameter_write_multiple_registers ( 0x0000, 
 																						0x007C );
 	assert! ( result_4.is_err () );
 
-	let result_5 : Result< bool, String > = verify_parameter_write_multiple_registers ( 0xFFFE, 
+	let result_5 : Result< bool, RegisterError > = verify_parameter_write_multiple_registers ( 0xFFFE, 
 																						0x000F );
 	assert! ( result_5.is_err () );
 }
 
-fn verify_parameter_write_multiple_registers ( starting_address : u16, quantity_of_registers : u16 ) -> Result< bool, String >
+fn verify_parameter_write_multiple_registers ( starting_address : u16, quantity_of_registers : u16 ) -> Result< bool, RegisterError >
 {
-	let mut reply : Result< bool, String > = Ok( false );
+	let mut reply: bool = false;
 
-	let address_good : bool = is_start_and_quantity_ok ( starting_address, 
-														 quantity_of_registers );
+	let address_good : bool = is_start_and_quantity_ok (starting_address, quantity_of_registers );
 
-	if address_good
-	{		
-	}
-	else
-	{
-		reply = Err( "Error - range or starting_address and quantity_of_registers is over 65535.".to_string () );
+	if !address_good {	
+		return Result::Err(RegisterError{ message: "Error - range or starting_address and quantity_of_registers is over 65535.".to_string() }); 
 	}
 
-	
 	let quantity_good : bool;
 
-	if address_good
-	{
-		if is_value_in_range ( quantity_of_registers, 
-							   0x0001, 
-							   0x007B )
-		{
+	if address_good {
+		if is_value_in_range ( quantity_of_registers, 0x0001, 0x007B ) {
 			quantity_good = true;
 		}
-		else
-		{
+		else {
 			quantity_good = false;
 
-			if quantity_of_registers == 0x0000
-			{
-				reply = Err( "Error at parameter quantity_of_registers - value to low, must be over 1".to_string () );
+			if quantity_of_registers == 0x0000 {
+				return Result::Err(RegisterError{message: "Error at parameter quantity_of_registers - value to low, must be over 1".to_string () });
 			}
 
-			if quantity_of_registers > 0x007B
-			{
-				reply = Err( "Error at parameter quantity_of_registers - value to high, must be lower or equal 123".to_string () );
+			if quantity_of_registers > 0x007B {
+				return Result::Err(RegisterError{ message: "Error at parameter quantity_of_registers - value to high, must be lower or equal 123" .to_string ()});	
 			}
 		}
 	}
@@ -1853,13 +1830,12 @@ fn verify_parameter_write_multiple_registers ( starting_address : u16, quantity_
 		quantity_good = false;
 	}
 
-
 	if address_good && quantity_good
 	{
-		reply = Ok( true );
+		reply = true;
 	}
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
@@ -1867,30 +1843,27 @@ fn verify_parameter_write_multiple_registers ( starting_address : u16, quantity_
 #[test]
 fn test_verify_parameter_write_single_coil ()
 {
-	let result_1 : Result< bool, String > = verify_parameter_write_single_coil ( 0x0000 );
+	let result_1 : Result< bool, CoilError > = verify_parameter_write_single_coil ( 0x0000 );
 	assert! ( result_1.is_ok () );
 
-	let result_2 : Result< bool, String > = verify_parameter_write_single_coil ( 0xFF00 );
+	let result_2 : Result< bool, CoilError > = verify_parameter_write_single_coil ( 0xFF00 );
 	assert! ( result_2.is_ok () );
 
-	let result_3 : Result< bool, String > = verify_parameter_write_single_coil ( 0x0F0F );
+	let result_3 : Result< bool, CoilError > = verify_parameter_write_single_coil ( 0x0F0F );
 	assert! ( result_3.is_err () );
 }
 
-fn verify_parameter_write_single_coil ( output_value : u16 ) -> Result< bool, String >
+fn verify_parameter_write_single_coil ( output_value : u16 ) -> Result< bool, CoilError >
 {
-	let reply : Result< bool, String >;
+	let reply : bool = false;
 
-	if output_value == 0x0000 || output_value == 0xFF00
+	if !(output_value == 0x0000 || output_value == 0xFF00)
 	{
-		reply = Ok( true );
+		return Result::Err(CoilError{message: "Error at parameter output_value - valid values are only 0 [0x0000] or 65280 [0xFF00]".to_string () });
 	}
-	else
-	{
-		reply = Err( "Error at parameter output_value - valid values are only 0 [0x0000] or 65280 [0xFF00].".to_string () );
-	}
+	reply = true;
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
