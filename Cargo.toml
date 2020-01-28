@@ -16,4 +16,3 @@ is-it-maintained-issue-resolution = { repository = "BiancoRoyal/modbus-iiot-rust
 is-it-maintained-open-issues = { repository = "BiancoRoyal/modbus-iiot-rust" }
 
 [dependencies]
-#failure = "*"
