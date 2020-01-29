@@ -209,9 +209,9 @@ fn count_up_last_transaction_id ( last_transaction_id : u16 ) -> u16
 
 impl EthernetMaster for TcpClient
 {
-	fn read_coils ( &mut self, starting_address : u16, quantity_of_coils : u16 ) -> ModbusReturnCoils
+	fn read_coils ( &mut self, starting_address : u16, quantity_of_coils : u16 ) -> Result<ModbusReturnCoils, ModbusTelegramError>
 	{
-		let reply : ModbusReturnCoils;
+		let reply : Result<ModbusReturnCoils, ModbusTelegramError>;
 
 		let start_time : Timestamp = Timestamp::new ();
 		let request_telegram : Result < ModbusTelegram, ModbusTelegramError > = create_request_read_coils ( self.last_transaction_id, 
@@ -219,36 +219,30 @@ impl EthernetMaster for TcpClient
 																							   starting_address, 
 																							   quantity_of_coils );
 	
-		if request_telegram.is_ok ()
-		{
+		if request_telegram.is_ok() {
 			let request : Option< ModbusTelegram > = Some( request_telegram.unwrap () );
 
-			if let Some( response ) = self.process_telegram ( &request )
-			{
-				if verify_function_code ( &request.unwrap (), 
-										  &response )
-				{
-					let response_data : Vec< bool > = prepare_response_read_coils ( &response.get_payload ().unwrap (),
-																					quantity_of_coils );
+			if let Some( response ) = self.process_telegram ( &request ) {
+				if verify_function_code ( &request.unwrap (), &response) {
+					let response_data : Vec< bool > = prepare_response_read_coils ( &response.get_payload ().unwrap (), quantity_of_coils );
 
-					reply = process_response_of_coils ( response_data,
-														&start_time );
+					Ok(process_response_of_coils(response_data, &start_time));
+				
 				}
-				else
-				{
-					reply = ModbusReturnCoils::Bad( ReturnBad::new_with_codes ( response.get_function_code ().unwrap (), 1 ) );
+				else {
+					return Result::Err(ModbusTelegramError{message: response.get_function_code().unwrap().to_string() });
 				}				
 			}
-			else
-			{
-				reply = ModbusReturnCoils::Bad( ReturnBad::new_with_message ( "created modbus telegram is invalid" ) );
+			else {
+				//reply = ModbusReturnCoils::Bad( ReturnBad::new_with_message ( "created modbus telegram is invalid" ) );
+				return Result::Err(ModbusTelegramError{message: "Created modbus telegram is not valid".to_string() });
+
 			}
 		}
-		else
-		{
-			reply = ModbusReturnCoils::Bad( ReturnBad::new_with_message ( &request_telegram.err ().unwrap () ) );
-		}
+		else {
+			return Result::Err(ModbusTelegramError{message: request_telegram.err().unwrap().to_string() });
 
+		}
 		return reply;
 	}
 
