@@ -13,6 +13,11 @@ impl fmt::Display for NetParseErr {
 }
 impl std::error::Error for NetParseErr{}
 
+impl From<std::io::Error> for NetParseErr {
+    fn from(error: std::io::Error) -> Self {
+        NetParseErr{}
+    }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -27,6 +32,11 @@ impl fmt::Display for ZeroPortErr {
 }
 impl std::error::Error for ZeroPortErr{}
 
+impl From<std::io::Error> for ZeroPortErr {
+    fn from(error: std::io::Error) -> Self {
+        ZeroPortErr{}
+    }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,6 +57,13 @@ impl fmt::Display for CoilError {
 
 impl std::error::Error for CoilError{}
 
+impl From<std::io::Error> for CoilError {
+    fn from(error: std::io::Error) -> Self {
+        CoilError{
+            message: "".to_string()
+        }
+    }
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -64,6 +81,14 @@ impl fmt::Display for ModbusTelegramError {
     }
 }
 impl std::error::Error for ModbusTelegramError{}
+
+impl From<std::io::Error> for ModbusTelegramError {
+    fn from(error: std::io::Error) -> Self {
+        ModbusTelegramError{
+            message: "".to_string()
+        }
+    }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -83,6 +108,13 @@ impl fmt::Display for RegisterError {
 }
 impl std::error::Error for RegisterError{}
 
+impl From<std::io::Error> for RegisterError {
+    fn from(error: std::io::Error) -> Self {
+        RegisterError{
+            message: "".to_string()
+        }
+    }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -99,3 +131,11 @@ impl fmt::Display for DataTransformError {
     }
 }
 impl std::error::Error for DataTransformError{}
+
+impl From<std::io::Error> for DataTransformError {
+    fn from(error: std::io::Error) -> Self {
+        DataTransformError{
+            message: "".to_string()
+        }
+    }
+}

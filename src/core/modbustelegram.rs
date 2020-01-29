@@ -2,6 +2,7 @@
 
 use core::consts::*;
 use core::datatransformation::*;
+use core::errortypes::*;
 
 //	===============================================================================================
 
@@ -41,23 +42,25 @@ impl ModbusTelegram
 		return reply;
 	}
 
-	pub fn new_from_bytes ( bytes : &Vec< u8 > ) -> Option< ModbusTelegram >
+	pub fn new_from_bytes ( bytes : &Vec< u8 > ) -> Result<ModbusTelegram, DataTransformError >
 	{
-		let reply : Option< ModbusTelegram >;
+		let reply : Result< ModbusTelegram, ModbusTelegramError >;
 
 		if bytes.len () > 9
 		{
-			let response_transaction_identifier : Option< u16 > = extract_word_from_bytearray(&bytes,0);
-			let response_unit_identifier : Option< u8 > = extract_byte_from_bytearray(&bytes, 6);
-			let response_function_code : Option< u8 > =	extract_byte_from_bytearray(&bytes, 7);
-			let function_code : u8 = response_function_code.unwrap();
-			let response_payload : Option< Vec< u8 > > = extract_payload_by_function_code ( function_code, &bytes );
+			let response_transaction_identifier : u16 = extract_word_from_bytearray(&bytes,0)?;
+			let response_unit_identifier : u8 = extract_byte_from_bytearray(&bytes, 6)?;
+			let response_function_code : u8  =	extract_byte_from_bytearray(&bytes, 7)?;
+			
+			//let function_code : u8 = response_function_code.unwrap();
+			
+			let response_payload : Option< Vec< u8 > > = extract_payload_by_function_code ( response_function_code, &bytes );
 
 			if response_transaction_identifier.is_some () &&
 			   response_unit_identifier.is_some () &&
 			   response_payload.is_some ()
 			{
-				reply =	Some(
+				reply =
 					ModbusTelegram
 					{
 						transaction_identifier : response_transaction_identifier.unwrap (),
@@ -66,7 +69,6 @@ impl ModbusTelegram
 						payload : response_payload.unwrap (),
 						expected_bytes : 0x00
 					}
-				);
 			}
 			else
 			{			
@@ -78,7 +80,7 @@ impl ModbusTelegram
 			reply = None;
 		}
 
-		return reply;
+		Ok(reply)
 	}
 
 	pub fn get_bytes ( &self ) -> Option< Vec< u8 > >
@@ -196,20 +198,20 @@ fn test_extract_payload_by_function_code ()
 	assert_eq! ( result_bytes_2[ 3 ], 0x10 );	
 }
 
-fn extract_payload_by_function_code ( function_code : u8, bytes : &Vec< u8 > ) -> Option< Vec< u8 > >
+fn extract_payload_by_function_code ( function_code : u8, bytes : &Vec< u8 > ) -> Result< Vec< u8 > , DataTransformError>
 {
-	let reply : Option< Vec< u8 > >;
+	let reply :Vec< u8 >;
 
 	match function_code
 	{
-		0x01	=> { reply = extract_payload_with_byte_count ( &bytes ); }
-		0x02	=> { reply = extract_payload_with_byte_count ( &bytes ); }
-		0x03	=> { reply = extract_payload_with_byte_count ( &bytes ); }
-		0x04	=> { reply = extract_payload_with_byte_count ( &bytes ); }
-		0x05	=> { reply = extract_payload_without_byte_count ( &bytes ); }
-		0x06	=> { reply = extract_payload_without_byte_count ( &bytes ); }
-		0x0F	=> { reply = extract_payload_without_byte_count ( &bytes ); }
-		0x10	=> { reply = extract_payload_without_byte_count ( &bytes ); }
+		0x01	=> { reply = extract_payload_with_byte_count ( &bytes )?; }
+		0x02	=> { reply = extract_payload_with_byte_count ( &bytes )?; }
+		0x03	=> { reply = extract_payload_with_byte_count ( &bytes )?; }
+		0x04	=> { reply = extract_payload_with_byte_count ( &bytes )?; }
+		0x05	=> { reply = extract_payload_without_byte_count ( &bytes )?; }
+		0x06	=> { reply = extract_payload_without_byte_count ( &bytes )?; }
+		0x0F	=> { reply = extract_payload_without_byte_count ( &bytes )?; }
+		0x10	=> { reply = extract_payload_without_byte_count ( &bytes )?; }
 		_		=> { reply = None; }
 	}
 
@@ -253,16 +255,17 @@ fn test_extract_payload_with_byte_count ()
 	assert_eq! ( result_bytes[ 6 ], 0x00 );
 }
 
-fn extract_payload_with_byte_count ( bytes : &Vec< u8 > ) -> Option< Vec< u8 > >
+fn extract_payload_with_byte_count ( bytes : &Vec< u8 > ) -> Result< Vec< u8 >, DataTransformError>
 {
-	let reply : Option< Vec< u8 > >;
+	// let byte_count : Option< u8 > = extract_byte_from_bytearray ( &bytes, 8 );
+	let byte_count: u8 = extract_byte_from_bytearray ( &bytes, 8 )?;
+	
+	//let count : u8 = byte_count.unwrap () + 1;
 
-	let byte_count : Option< u8 > = extract_byte_from_bytearray ( &bytes, 8 );
-	let count : u8 = byte_count.unwrap () + 1;
+	let res = extract_bytes_from_bytearray ( &bytes, 8, byte_count + 1)?;
+	Ok(res)
 
-	reply = extract_bytes_from_bytearray ( &bytes, 8, count);
-
-	return reply;
+	//return reply;
 }
 
 //	===============================================================================================

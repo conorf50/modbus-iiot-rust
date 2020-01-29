@@ -3,25 +3,28 @@
 use std::io::{Write, Read};
 use std::net::TcpStream;
 use core::modbustelegram::ModbusTelegram;
+use core::errortypes::ModbusTelegramError;
+
 
 //	===============================================================================================
 
-fn read_telegram_from_stream ( stream : &mut TcpStream, expected_bytes : u8 ) -> Result< ModbusTelegram, String >
+fn read_telegram_from_stream ( stream : &mut TcpStream, expected_bytes : u8 ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
-	let mut reply : Result< ModbusTelegram, String > = Err( "Tcp Read Failed".to_string () );
+	//let mut reply : Result< ModbusTelegram, String > = Err( "Tcp Read Failed".to_string () );
 
-	let mut data : Vec< u8 > = vec![ 0; expected_bytes as usize ];
+	let mut data = vec![ 0; expected_bytes as usize ];
 	let response = stream.read ( &mut data );
 
 	if response.is_ok ()
 	{
-        if let Some( telegram ) = ModbusTelegram::new_from_bytes ( &data )
-        {
-            reply = Ok( telegram );
-        }
+        let telegram = ModbusTelegram::new_from_bytes ( &data )?;
+        
+        return Result::Ok(telegram);
+        
 	}
 
-	return reply;
+	return Result::Err(ModbusTelegramError{message: "Could not create telegram".to_string() } );
+
 }
 
 //	===============================================================================================

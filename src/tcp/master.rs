@@ -214,13 +214,10 @@ impl EthernetMaster for TcpClient
 		let reply : Result<ModbusReturnCoils, ModbusTelegramError>;
 
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result < ModbusTelegram, ModbusTelegramError > = create_request_read_coils ( self.last_transaction_id, 
-																							   self.unit_identifier, 
-																							   starting_address, 
-																							   quantity_of_coils );
+		let request_telegram = create_request_read_coils ( self.last_transaction_id, self.unit_identifier, starting_address, quantity_of_coils )?;
 	
-		if request_telegram.is_ok() {
-			let request : Option< ModbusTelegram > = Some( request_telegram.unwrap () );
+		//if request_telegram.is_ok() {
+		let request = self.process_telegram ( &request_telegram );
 
 			if let Some( response ) = self.process_telegram ( &request ) {
 				if verify_function_code ( &request.unwrap (), &response) {
@@ -238,12 +235,12 @@ impl EthernetMaster for TcpClient
 				return Result::Err(ModbusTelegramError{message: "Created modbus telegram is not valid".to_string() });
 
 			}
-		}
-		else {
-			return Result::Err(ModbusTelegramError{message: request_telegram.err().unwrap().to_string() });
+		// }
+		// else {
+		// 	return Result::Err(ModbusTelegramError{message: request_telegram.err().unwrap().to_string() });
 
-		}
-		return reply;
+		// }
+		// return reply;
 	}
 
 	fn read_discrete_inputs ( &mut self, starting_address : u16, quantity_of_inputs : u16 ) -> ModbusReturnCoils
