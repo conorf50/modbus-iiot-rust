@@ -13,6 +13,10 @@ impl fmt::Display for NetParseErr {
 }
 impl std::error::Error for NetParseErr{}
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 // another custom error for a zero port
 #[derive(Debug)]
 pub struct ZeroPortErr();
@@ -22,6 +26,9 @@ impl fmt::Display for ZeroPortErr {
     }
 }
 impl std::error::Error for ZeroPortErr{}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // Error for a coil index which is out of bounds
@@ -37,7 +44,11 @@ impl fmt::Display for CoilError {
         write!(f, "{}", self.message)
     }
 }
+
 impl std::error::Error for CoilError{}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // ModbusTelegramError
 // Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
@@ -53,6 +64,8 @@ impl fmt::Display for ModbusTelegramError {
     }
 }
 impl std::error::Error for ModbusTelegramError{}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // Generic error for a register

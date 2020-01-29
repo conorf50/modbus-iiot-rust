@@ -1,7 +1,7 @@
 
 
 use core::modbusreturn::{ModbusReturnCoils, ModbusReturnRegisters};
-
+use core::errortypes::*;
 
 /// MODBUS API (based on the technical protocol specification)
 pub trait EthernetMaster
@@ -32,7 +32,7 @@ pub trait EthernetMaster
     ///     client.disconnect();
     /// }
     /// ```
-	fn read_coils ( &mut self, starting_address : u16, quantity_of_coils : u16 ) -> ModbusReturnCoils;
+	fn read_coils ( &mut self, starting_address : u16, quantity_of_coils : u16 ) -> Result<ModbusReturnCoils,CoilError>;
 
 	///	MODBUS Function Code 2 (0x02)
     /// This function code is used to read from 1 to 2000 contiguous 
@@ -60,7 +60,7 @@ pub trait EthernetMaster
     ///     client.disconnect();
     /// }
     /// ```
-    fn read_discrete_inputs ( &mut self, starting_address : u16, quantity_of_inputs : u16 ) -> ModbusReturnCoils;
+    fn read_discrete_inputs ( &mut self, starting_address : u16, quantity_of_inputs : u16 ) -> Result<ModbusReturnCoils, CoilError>;
 
 	///	MODBUS Function Code 3 (0x03)
     /// This function code is used to read the contents of a contiguous
@@ -88,7 +88,7 @@ pub trait EthernetMaster
     ///     client.disconnect();
     /// }
     /// ```
-    fn read_holding_registers ( &mut self, starting_address : u16, quantity_of_registers : u16 ) -> ModbusReturnRegisters;
+    fn read_holding_registers ( &mut self, starting_address : u16, quantity_of_registers : u16 ) -> Result<ModbusReturnRegisters, RegisterError>;
    
     ///	MODBUS Function Code 4 (0x04)
     /// This function code is used to read from 1 to 125 contiguous 
@@ -116,7 +116,7 @@ pub trait EthernetMaster
     ///     client.disconnect();
     /// }
     /// ```
-    fn read_input_registers ( &mut self, starting_address : u16, quantity_of_input_registers : u16 ) -> ModbusReturnRegisters;
+    fn read_input_registers ( &mut self, starting_address : u16, quantity_of_input_registers : u16 ) -> Result<ModbusReturnRegisters, RegisterError>;
     
 	/// MODBUS Function Code 5 (0x05)
     /// This function code is used to write a single output to 
@@ -149,7 +149,7 @@ pub trait EthernetMaster
     ///     client.disconnect();
     /// }
     /// ```
-    fn write_single_coil ( &mut self, output_address : u16, output_value : u16 ) -> ModbusReturnCoils;
+    fn write_single_coil ( &mut self, output_address : u16, output_value : u16 ) -> Result<ModbusReturnCoils, CoilError>;
   
     ///	MODBUS Function Code 6 (0x06)
     /// This function code is used to write a single 
@@ -177,7 +177,7 @@ pub trait EthernetMaster
     ///     client.disconnect();
     /// }
     /// ```
-    fn write_single_register ( &mut self, register_address : u16, register_value : u16 ) -> ModbusReturnRegisters;
+    fn write_single_register ( &mut self, register_address : u16, register_value : u16 ) ->  Result<ModbusReturnRegisters, RegisterError>;
     
     ///	MODBUS Function Code 15 (0x0F)
     /// This function code is used to force each coil in a 
@@ -205,7 +205,7 @@ pub trait EthernetMaster
     ///     client.disconnect();
     /// }
     /// ```
-    fn write_multiple_coils ( &mut self, starting_address : u16, quantity_of_outputs : u16, outputs_value : Vec< u8 > ) -> ModbusReturnRegisters;
+    fn write_multiple_coils ( &mut self, starting_address : u16, quantity_of_outputs : u16, outputs_value : Vec< u8 > ) ->  Result<ModbusReturnRegisters, RegisterError>;
     
     ///	MODBUS Function Code 16 (0x10)
     /// This function code is used to write a block of contiguous
@@ -233,5 +233,5 @@ pub trait EthernetMaster
     ///     client.disconnect ();    
     /// }
     /// ```
-    fn write_multiple_registers ( &mut self, starting_address : u16, register_values : Vec< u16 > ) -> ModbusReturnRegisters;    
+    fn write_multiple_registers ( &mut self, starting_address : u16, register_values : Vec< u16 > ) -> Result<ModbusReturnRegisters, RegisterError>;    
 }

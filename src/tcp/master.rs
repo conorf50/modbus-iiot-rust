@@ -10,6 +10,7 @@ use core::methods::*;
 use core::timehandling::*;
 use tcp::masteraccess::*;
 use tcp::streamtelegram::*;
+use core::errortypes::*;
 //	===============================================================================================
 
 pub struct TcpClient
@@ -213,7 +214,7 @@ impl EthernetMaster for TcpClient
 		let reply : ModbusReturnCoils;
 
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result < ModbusTelegram, String > = create_request_read_coils ( self.last_transaction_id, 
+		let request_telegram : Result < ModbusTelegram, ModbusTelegramError > = create_request_read_coils ( self.last_transaction_id, 
 																							   self.unit_identifier, 
 																							   starting_address, 
 																							   quantity_of_coils );
@@ -256,7 +257,7 @@ impl EthernetMaster for TcpClient
 		let reply : ModbusReturnCoils;
 
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result< ModbusTelegram, String > = create_request_read_discrete_inputs ( self.last_transaction_id, 
+		let request_telegram : Result< ModbusTelegram, ModbusTelegramError > = create_request_read_discrete_inputs ( self.last_transaction_id, 
 																					 		   			self.unit_identifier, 
 																					 		   			starting_address, 
 																					 		   			quantity_of_inputs );
@@ -299,7 +300,7 @@ impl EthernetMaster for TcpClient
 		let reply : ModbusReturnRegisters;
 
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result< ModbusTelegram, String > = create_request_read_holding_registers ( self.last_transaction_id, 
+		let request_telegram : Result< ModbusTelegram, ModbusTelegramError > = create_request_read_holding_registers ( self.last_transaction_id, 
 																										  self.unit_identifier,
 																										  starting_address,
 																										  quantity_of_registers );
@@ -341,7 +342,7 @@ impl EthernetMaster for TcpClient
 		let reply : ModbusReturnRegisters;
 
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result< ModbusTelegram, String > = create_request_read_input_registers ( self.last_transaction_id, 
+		let request_telegram : Result< ModbusTelegram, ModbusTelegramError > = create_request_read_input_registers ( self.last_transaction_id, 
 																							   			self.unit_identifier, 
 																							   			starting_address, 
 																							   			quantity_of_input_registers );
@@ -383,7 +384,7 @@ impl EthernetMaster for TcpClient
 		let reply : ModbusReturnCoils;
 
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result< ModbusTelegram, String > = create_request_write_single_coil ( self.last_transaction_id, 
+		let request_telegram : Result< ModbusTelegram, ModbusTelegramError > = create_request_write_single_coil ( self.last_transaction_id, 
 																						    		 self.unit_identifier, 
 																						    		 output_address, 
 																						    		 output_value );
@@ -425,7 +426,7 @@ impl EthernetMaster for TcpClient
 		let reply : ModbusReturnRegisters;
 
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result< ModbusTelegram, String > = create_request_write_single_register ( self.last_transaction_id, 
+		let request_telegram : Result< ModbusTelegram, ModbusTelegramError > = create_request_write_single_register ( self.last_transaction_id, 
 																						    			 self.unit_identifier, 
 																						    			 register_address, 
 																						    			 register_value );
@@ -467,7 +468,7 @@ impl EthernetMaster for TcpClient
 		let reply: ModbusReturnRegisters;
 
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result< ModbusTelegram, String > = create_request_write_multiple_coils ( self.last_transaction_id, 
+		let request_telegram : Result< ModbusTelegram, ModbusTelegramError > = create_request_write_multiple_coils ( self.last_transaction_id, 
 																						       			self.unit_identifier, 
 																						       			starting_address, 
 																						       			quantity_of_outputs,
@@ -510,7 +511,7 @@ impl EthernetMaster for TcpClient
 		let reply: ModbusReturnRegisters;
 		
 		let start_time : Timestamp = Timestamp::new ();
-		let request_telegram : Result< ModbusTelegram, String > = create_request_write_multiple_registers ( self.last_transaction_id, 
+		let request_telegram : Result< ModbusTelegram, ModbusTelegramError > = create_request_write_multiple_registers ( self.last_transaction_id, 
 																								   			self.unit_identifier, 
 																								   			starting_address, 
 																								   			register_values );
