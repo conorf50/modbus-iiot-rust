@@ -31,7 +31,7 @@ impl std::error::Error for ZeroPortErr{}
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// Error for a coil index which is out of bounds
+// Error for a coil
 // Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
 #[derive(Debug)]
 pub struct CoilError{
@@ -82,3 +82,20 @@ impl fmt::Display for RegisterError {
     }
 }
 impl std::error::Error for RegisterError{}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+// For errors that occur during data conversion
+#[derive(Debug)]
+pub struct DataTransformError{
+    message: String
+}
+
+// Using this, we can call the same error with different messages to display to the end-user
+impl fmt::Display for DataTransformError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Error during data conversion (error:'{}')", self.message)
+    }
+}
+impl std::error::Error for DataTransformError{}

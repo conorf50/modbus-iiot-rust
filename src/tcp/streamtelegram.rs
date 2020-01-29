@@ -53,7 +53,7 @@ pub fn process_modbus_telegram ( stream : &mut TcpStream, telegram : &Option< Mo
 	{
 		let write_telegram : &ModbusTelegram = telegram.as_ref ().unwrap ();
 		let write_response : Result< bool, String > = write_telegram_to_stream ( stream, 
-																				  write_telegram );
+																				 write_telegram );
 		if write_response.is_ok ()
 		{
 			let expected_bytes : Option< u8 > = write_telegram.get_expected_byte_count ();

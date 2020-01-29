@@ -1,5 +1,4 @@
-
-
+use core::errortypes::DataTransformError;
 //	===============================================================================================
 
 #[test]
@@ -73,42 +72,44 @@ fn test_extract_byte_from_bytearray ()
 {
 	let test_array : Vec< u8 > = vec![ 0x01, 0x0A, 0xFF, 0x10 ];
 
-	let result_1 : Option< u8 > = extract_byte_from_bytearray ( &test_array, 
+	let result_1 : Result< u8, DataTransformError > = extract_byte_from_bytearray ( &test_array, 
 																0 );
-	assert! ( result_1.is_some () );
+	assert! ( result_1.is_ok() );
 	assert_eq! ( result_1.unwrap (), 0x01 );
 
-	let result_2 : Option< u8 > = extract_byte_from_bytearray ( &test_array, 
+	let result_2 : Result< u8, DataTransformError> = extract_byte_from_bytearray ( &test_array, 
 																2 );
-	assert! ( result_2.is_some () );
-	assert_eq! ( result_2.unwrap (), 0xFF );
+	assert! ( result_2.is_ok() );
+	assert_eq! ( result_2.unwrap(), 0xFF );
 
-	let result_3 : Option< u8 > = extract_byte_from_bytearray ( &test_array, 
+	let result_3 : Result< u8 , DataTransformError> = extract_byte_from_bytearray ( &test_array, 
 																3 );
-	assert! ( result_3.is_some () );
+	assert! ( result_3.is_ok() );
 	assert_eq! ( result_3.unwrap (), 0x10 );
 
-	let result_4 : Option< u8 > = extract_byte_from_bytearray ( &test_array, 
+	let result_4 : Result< u8 , DataTransformError> = extract_byte_from_bytearray ( &test_array, 
 																4 );
-	assert! ( result_4.is_none () );
+	assert! ( result_4.is_err() );
 }
 
-pub fn extract_byte_from_bytearray ( source_array : &Vec< u8 >, start_index : u8 ) -> Option< u8 >
+
+
+
+pub fn extract_byte_from_bytearray ( source_array : &Vec< u8 >, start_index : u8 ) -> Result< u8, DataTransformError>
 {
-	let reply : Option< u8 >;
+	let reply : u8;
 
-	if let Some( result ) = extract_bytes_from_bytearray ( &source_array, 
-														   start_index, 
-														   1 )
-	{
-		reply = Some( result[ 0 ] );
-	}
-	else
-	{
-		reply = None;
-	}
+	// Extract only one byte from the array
+	let result = extract_bytes_from_bytearray ( &source_array, start_index,1);
+	
+	match result {
+		Ok(result) => {
+			let reply = result[0];
+		},
+		Err(_) => return Result::Err(DataTransformError {message: "Array was empty".to_string()} )
+	};
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
@@ -118,46 +119,47 @@ fn test_extract_bytes_from_bytearray ()
 {
 	let test_array : Vec< u8 > = vec![ 0x01, 0x0A, 0xFF, 0x10 ];
 
-	let result_1 : Option< Vec< u8 > > = extract_bytes_from_bytearray ( &test_array, 
+	let result_1 : Result< Vec< u8 >, DataTransformError > = extract_bytes_from_bytearray ( &test_array, 
 																		0, 
 																		1 );
-	assert! ( result_1.is_some () );
+	assert! ( result_1.is_ok() );
 	assert_eq! ( result_1.unwrap ()[ 0 ], 0x01 );
 
-	let result_2 : Option< Vec< u8 > > = extract_bytes_from_bytearray ( &test_array, 
+	let result_2 : Result< Vec< u8 >, DataTransformError > = extract_bytes_from_bytearray ( &test_array, 
 																		1, 
 																		2 );
-	assert! ( result_2.is_some () );
+	assert! ( result_2.is_ok() );
 
 	let result_2_data = result_2.unwrap ();
 	assert_eq! ( result_2_data[ 0 ], 0x0A );
 	assert_eq! ( result_2_data[ 1 ], 0xFF );
 
-	let result_3 : Option< Vec< u8 > > = extract_bytes_from_bytearray ( &test_array, 
+	let result_3 : Result< Vec< u8 >, DataTransformError > = extract_bytes_from_bytearray ( &test_array, 
 																		1, 
 																		4 );
-	assert! ( result_3.is_none () );
+	assert! ( result_3.is_err() );
 
-	let result_4 : Option< Vec< u8 > > = extract_bytes_from_bytearray ( &test_array, 
+
+	let result_4 : Result< Vec< u8>, DataTransformError> = extract_bytes_from_bytearray ( &test_array, 
 																		3, 
 																		1 );
-	assert! ( result_4.is_some () );
+	assert! ( result_4.is_ok());
 	assert_eq! ( result_4.unwrap ()[ 0 ], 0x10 );
 
-	let result_5 : Option< Vec< u8 > > = extract_bytes_from_bytearray ( &test_array, 
+	let result_5 : Result< Vec< u8>, DataTransformError > = extract_bytes_from_bytearray ( &test_array, 
 																		3, 
 																		2 );
-	assert! ( result_5.is_none () );
+	assert! ( result_5.is_err() );
 
-	let result_6 : Option< Vec< u8 > > = extract_bytes_from_bytearray ( &test_array, 
+	let result_6 : Result< Vec<u8>, DataTransformError > = extract_bytes_from_bytearray ( &test_array, 
 																		4, 
 																		1 );
-	assert! ( result_6.is_none () );
+	assert! ( result_6.is_err());
 }
 
-pub fn extract_bytes_from_bytearray ( source_array : &Vec< u8 >, start_index : u8, byte_count : u8 ) -> Option< Vec< u8 > >
+pub fn extract_bytes_from_bytearray ( source_array : &Vec< u8 >, start_index : u8, byte_count : u8 ) -> Result< Vec<u8> , DataTransformError>
 {
-	let reply : Option< Vec< u8 > >;
+	let reply : Result< Vec< u8 > , DataTransformError>;
 	
 	let source_length : u8 = source_array.len () as u8;
 	let verify_length : u8 = start_index + byte_count;
@@ -173,19 +175,20 @@ pub fn extract_bytes_from_bytearray ( source_array : &Vec< u8 >, start_index : u
 
 		if copy_array.len () > 0
 		{
-			reply = Some( copy_array.clone () );
-		}
+			//reply = copy_array();
+
+			// TODO, remove the clone() call here as it may be causing a memory leak
+			return Result::Ok(copy_array.clone());
+		}	
 		else
 		{
-			reply = None;
+			return Result::Err(DataTransformError{message: "Byte array length must be greater than 0".to_string() } );
 		}
 	}
 	else
 	{
-		reply = None;
+		return Result::Err(DataTransformError{message: "Error parsing byte array".to_string() } );
 	}
-
-	return reply;
 }
 
 //	===============================================================================================
@@ -195,35 +198,23 @@ fn test_extract_word_from_bytearray ()
 {
 	let test_array : Vec< u8 > = vec![ 0x01, 0x0A, 0xFF, 0x10 ];
 
-	let result_1 : Option< u16 > = extract_word_from_bytearray ( &test_array, 
-																 1 );
-	assert! ( result_1.is_some () );
+	let result_1 : Result< u16, DataTransformError> = extract_word_from_bytearray ( &test_array, 1 );
+	assert! ( result_1.is_ok());
 	assert_eq! ( result_1.unwrap (), 0x0AFF );
 	
-	let result_2 : Option< u16 > = extract_word_from_bytearray ( &test_array, 
+	let result_2 : Result< u16, DataTransformError > = extract_word_from_bytearray ( &test_array, 
 																 3 );
-	assert! ( result_2.is_none () );
+	assert! ( result_2.is_err());
 }
 
-pub fn extract_word_from_bytearray ( source_array : &Vec< u8 >, start_index : u8 ) -> Option< u16 >
+pub fn extract_word_from_bytearray ( source_array : &Vec< u8 >, start_index : u8 ) -> Result< u16, DataTransformError >
 {
-	let reply : Option< u16 >;
+	let reply : Result< u16, DataTransformError>;
 
-	if let Some( result ) = extract_bytes_from_bytearray ( &source_array, 
-														   start_index, 
-														   2 )
-	{
-		reply = Some( 
-			transform_bytes_to_word ( &result, 
-									  0 )
-		);
-	}
-	else
-	{
-		reply = None;
-	}
+	let result = extract_bytes_from_bytearray ( &source_array, start_index, 2)?;
+	let reply = transform_bytes_to_word ( &result, 0);
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
