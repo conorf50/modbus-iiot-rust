@@ -17,13 +17,13 @@ pub struct ModbusTelegram
 
 impl ModbusTelegram
 {
-	pub fn new ( transaction_identifier : u16, unit_identifier : u8, function_code : u8, payload : &Vec< u8 >, expected_bytes : u8 ) -> Option< ModbusTelegram >
+	pub fn new ( transaction_identifier : u16, unit_identifier : u8, function_code : u8, payload : &Vec< u8 >, expected_bytes : u8 ) -> Result< ModbusTelegram , ModbusTelegramError>
 	{
-		let reply : Option< ModbusTelegram >;
+		let reply : Result< ModbusTelegram, ModbusTelegramError >;
 
 		if transaction_identifier > 0x0000 && function_code > 0x00
 		{
-			reply = Some(
+			Ok(
 				ModbusTelegram
 				{
 					transaction_identifier : transaction_identifier,
@@ -32,14 +32,12 @@ impl ModbusTelegram
 					payload : payload.clone (),
 					expected_bytes : expected_bytes
 				}
-			);
+			)
 		}
 		else
-		{		
-			reply = None;		
+		{
+			return Result::Err(ModbusTelegramError{message: "Transaction ID and function code were both zero".to_string() } );
 		}
-
-		return reply;
 	}
 
 	pub fn new_from_bytes ( bytes : &Vec< u8 > ) -> Result<ModbusTelegram, DataTransformError >
@@ -54,33 +52,21 @@ impl ModbusTelegram
 			
 			//let function_code : u8 = response_function_code.unwrap();
 			
-			let response_payload : Option< Vec< u8 > > = extract_payload_by_function_code ( response_function_code, &bytes );
+			let response_payload : Vec< u8 >  = extract_payload_by_function_code ( response_function_code, &bytes )?;
 
-			if response_transaction_identifier.is_some () &&
-			   response_unit_identifier.is_some () &&
-			   response_payload.is_some ()
-			{
-				reply =
-					ModbusTelegram
+			Ok(ModbusTelegram
 					{
-						transaction_identifier : response_transaction_identifier.unwrap (),
-						unit_identifier : response_unit_identifier.unwrap (),
-						function_code :	function_code,
-						payload : response_payload.unwrap (),
+						transaction_identifier : response_transaction_identifier,
+						unit_identifier : response_unit_identifier,
+						function_code :	response_function_code,
+						payload : response_payload,
 						expected_bytes : 0x00
-					}
-			}
-			else
-			{			
-				reply = None;
-			}
+					})
 		}
 		else
 		{
-			reply = None;
+			return Result::Err(DataTransformError{message: "Byte array length must be greater than 9".to_string() } );
 		}
-
-		Ok(reply)
 	}
 
 	pub fn get_bytes ( &self ) -> Option< Vec< u8 > >
@@ -159,9 +145,9 @@ fn test_extract_payload_by_function_code ()
 	test_data_1.push ( 0xFF );	//	data
 	test_data_1.push ( 0x00 );	//	data
 
-	let result_data_1 : Option< Vec< u8 > > = extract_payload_by_function_code ( 0x03, 
+	let result_data_1 : Result< Vec< u8 > , DataTransformError> = extract_payload_by_function_code ( 0x03, 
 																				 &test_data_1 );
-	assert! ( result_data_1.is_some () );
+	assert! ( result_data_1.is_ok() );
 
 	let result_bytes_1 : Vec< u8 > = result_data_1.unwrap ();
 	assert_eq! ( result_bytes_1.len (), 7 );
@@ -187,8 +173,8 @@ fn test_extract_payload_by_function_code ()
 	test_data_2.push ( 0x00 );	//	quantity_of_registers
 	test_data_2.push ( 0x10 );	//	quantity_of_registers
 	
-	let result_data_2 : Option< Vec< u8 > > = extract_payload_by_function_code ( 0x10, &test_data_2 );
-	assert! ( result_data_2.is_some () );
+	let result_data_2 : Result< Vec< u8 >, DataTransformError > = extract_payload_by_function_code ( 0x10, &test_data_2 );
+	assert! ( result_data_2.is_ok() );
 
 	let result_bytes_2 : Vec< u8 > = result_data_2.unwrap ();
 	assert_eq! ( result_bytes_2.len (), 4 );
@@ -212,10 +198,12 @@ fn extract_payload_by_function_code ( function_code : u8, bytes : &Vec< u8 > ) -
 		0x06	=> { reply = extract_payload_without_byte_count ( &bytes )?; }
 		0x0F	=> { reply = extract_payload_without_byte_count ( &bytes )?; }
 		0x10	=> { reply = extract_payload_without_byte_count ( &bytes )?; }
-		_		=> { reply = None; }
+		_		=> { 			
+			return Result::Err(DataTransformError{message: "Could not match function code ".to_string()} ); 
+		}
 	}
-
-	return reply;
+	Ok(reply)
+	// return reply;
 }
 
 //	===============================================================================================
@@ -241,8 +229,8 @@ fn test_extract_payload_with_byte_count ()
 	test_data.push ( 0xFF );	//	data
 	test_data.push ( 0x00 );	//	data
 
-	let result_data : Option< Vec< u8 > > = extract_payload_with_byte_count ( &test_data );
-	assert! ( result_data.is_some () );
+	let result_data : Result< Vec< u8 >, DataTransformError > = extract_payload_with_byte_count ( &test_data );
+	assert! ( result_data.is_ok() );
 
 	let result_bytes : Vec< u8 > = result_data.unwrap ();
 	assert_eq! ( result_bytes.len (), 7 );
@@ -288,8 +276,8 @@ fn test_extract_payload_without_byte_count ()
 	test_data.push ( 0x00 );	//	quantity_of_registers
 	test_data.push ( 0x10 );	//	quantity_of_registers
 	
-	let result_data : Option< Vec< u8 > > = extract_payload_without_byte_count ( &test_data );
-	assert! ( result_data.is_some () );
+	let result_data : Result< Vec< u8 >, DataTransformError > = extract_payload_without_byte_count ( &test_data );
+	assert! ( result_data.is_ok());
 
 	let result_bytes : Vec< u8 > = result_data.unwrap ();
 	assert_eq! ( result_bytes.len (), 4 );
@@ -299,15 +287,15 @@ fn test_extract_payload_without_byte_count ()
 	assert_eq! ( result_bytes[ 3 ], 0x10 );
 }
 
-fn extract_payload_without_byte_count ( bytes : &Vec< u8 > ) -> Option< Vec< u8 > >
+fn extract_payload_without_byte_count ( bytes : &Vec< u8 > ) -> Result< Vec< u8 > , DataTransformError>
 {
-	let reply : Option< Vec< u8 > >;
+	//let reply : Option< Vec< u8 > >;
 
 	let byte_count : u8 = bytes.len () as u8 - MODBUS_HEADER_SIZE - 1; // -1 for FunctionCode
 
-	reply = extract_bytes_from_bytearray ( &bytes, 8, byte_count);
+	let reply = extract_bytes_from_bytearray ( &bytes, 8, byte_count)?;
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
@@ -317,19 +305,19 @@ fn test_verify_function_code ()
 {
 	let l_payload : Vec< u8 > = vec![ 0x00, 0xFF, 0x00, 0x0A ];
 
-	let test_data_request : Option< ModbusTelegram > = ModbusTelegram::new ( 0x00A0, 
+	let test_data_request : Result< ModbusTelegram, ModbusTelegramError > = ModbusTelegram::new ( 0x00A0, 
 																			 0x01, 
 																			 0x01, 
 																			 &l_payload, 
 																			 0x00 );
-	assert! ( test_data_request.is_some () );
+	assert! ( test_data_request.is_ok() );
 	
-	let test_data_response : Option< ModbusTelegram > = ModbusTelegram::new ( 0x00A0, 
+	let test_data_response : Result< ModbusTelegram, ModbusTelegramError > = ModbusTelegram::new ( 0x00A0, 
 																			  0x01, 
 																			  0x01, 
 																			  &l_payload, 
 																			  0x00 );
-	assert! ( test_data_response.is_some () );
+	assert! ( test_data_response.is_ok());
 
 	let is_equal : bool = verify_function_code ( &test_data_request.unwrap (), 
 												 &test_data_response.unwrap () );

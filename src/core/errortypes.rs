@@ -139,3 +139,30 @@ impl From<std::io::Error> for DataTransformError {
         }
     }
 }
+
+
+// For errors that occur during function code parsing
+#[derive(Debug)]
+pub struct FunctionCodeError{
+    message: String,
+    code: u8
+}
+
+// Using this, we can call the same error with different messages to display to the end-user
+impl fmt::Display for FunctionCodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Encountered error {} during parsing of function code {}", self.message, self.code)
+    }
+}
+impl std::error::Error for FunctionCodeError{}
+
+impl From<std::io::Error> for FunctionCodeError {
+    fn from(error: std::io::Error) -> Self {
+        FunctionCodeError {
+        // TODO, fix this
+                message: "msg".to_string(),
+                code: 0
+        }
+        
+    }
+}
