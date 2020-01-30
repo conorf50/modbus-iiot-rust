@@ -136,17 +136,22 @@ impl TcpClient {
     return reply;
   }
 
-  fn process_telegram(&mut self, request: &Option<ModbusTelegram>) -> Option<ModbusTelegram> {
-    let mut reply: Option<ModbusTelegram> = None;
+  fn process_telegram(&mut self, request: &ModbusTelegram) -> Result<ModbusTelegram, ModbusTelegramError> {
+    let mut reply: ModbusTelegram;
 
-    if let Some(mut stream) = self.stream.take() {
-      reply = process_modbus_telegram(&mut stream, &request);
+	let mut stream = self.stream.take();
+	
+	if stream.is_some(){
+		let reply = process_modbus_telegram(&mut stream.unwrap(), request);
+		self.stream = Some(stream.unwrap());
+		self.update_last_transaction_id();
+	}
+	else {
+		return Result::Err(ModbusTelegramError{message: "Stream was empty.".to_string() } );
 
-      self.stream = Some(stream);
-      self.update_last_transaction_id();
-    }
-
-    return reply;
+	}
+	
+	Ok(reply)
   }
 
   fn update_last_transaction_id(&mut self) {
@@ -198,52 +203,62 @@ impl EthernetMaster for TcpClient {
     )?;
 
     //if request_telegram.is_ok() {
-    let request = self.process_telegram(&request_telegram);
-
-    if let Some(response) = self.process_telegram(&request) {
-      if verify_function_code(&request.unwrap(), &response) {
-        let response_data: Vec<bool> = prepare_response_read_coils(&response.get_payload().unwrap(), quantity_of_coils);
-
-        Ok(process_response_of_coils(response_data, &start_time));
-      } else {
+    let request = self.process_telegram(&request_telegram)?;
+	let response= self.process_telegram(&request)?;
+	
+    if verify_function_code(&request, &response) {
+		let response_data = prepare_response_read_coils(&response.get_payload().unwrap(), quantity_of_coils);
+		
+		if response_data.is_ok(){
+			
+			return Result::Ok(process_response_of_coils(response_data.unwrap(), &start_time));
+		}
+		else {
+			return Result::Err(ModbusTelegramError {
+				message: response.get_function_code().unwrap().to_string(),
+			  });
+		}
+		
+	  } 
+	  
+	  else {
         return Result::Err(ModbusTelegramError {
           message: response.get_function_code().unwrap().to_string(),
         });
       }
-    } else {
-      return Result::Err(ModbusTelegramError {
-        message: "Created modbus telegram is not valid".to_string(),
-      });
-    }
+
   }
 
-  fn read_discrete_inputs(&mut self, starting_address: u16, quantity_of_inputs: u16) -> ModbusReturnCoils {
+  fn read_discrete_inputs(&mut self, starting_address: u16, quantity_of_inputs: u16) -> Result<ModbusReturnCoils, ModbusTelegramError> {
     let reply: ModbusReturnCoils;
 
     let start_time: Timestamp = Timestamp::new();
-    let request_telegram: Result<ModbusTelegram, ModbusTelegramError> = create_request_read_discrete_inputs(
+    let request_telegram = create_request_read_discrete_inputs(
       self.last_transaction_id,
       self.unit_identifier,
       starting_address,
       quantity_of_inputs,
-    );
+    )?;
 
-    if request_telegram.is_ok() {
-      let request: Option<ModbusTelegram> = Some(request_telegram.unwrap());
+      //let request: Option<ModbusTelegram> = Some(request_telegram.unwrap());
 
-      if let Some(response) = self.process_telegram(&request) {
-        if verify_function_code(&request.unwrap(), &response) {
-          let response_data: Vec<bool> =
-            prepare_response_read_discrete_inputs(&response.get_payload().unwrap(), quantity_of_inputs);
+	let response = self.process_telegram(&request_telegram)?;
+	
+    if verify_function_code(&request_telegram, &response) {
+
+        let response_data = prepare_response_read_discrete_inputs(&response.get_payload().unwrap(), quantity_of_inputs);
+		if response_data.is_ok(){
+		}
 
           reply = process_response_of_coils(response_data, &start_time);
-        } else {
+		}
+	 else {
           reply = ModbusReturnCoils::Bad(ReturnBad::new_with_codes(response.get_function_code().unwrap(), 1));
         }
-      } else {
+       else {
         reply = ModbusReturnCoils::Bad(ReturnBad::new_with_message("created modbus telegram is invalid"));
       }
-    } else {
+     else {
       reply = ModbusReturnCoils::Bad(ReturnBad::new_with_message(&request_telegram.err().unwrap()));
     }
 

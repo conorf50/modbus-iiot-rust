@@ -63,11 +63,11 @@ impl ModbusTelegram {
     }
   }
 
-  pub fn get_bytes(&self) -> Option<Vec<u8>> {
+  pub fn get_bytes(&self) -> Result<Vec<u8>, DataTransformError> {
     let mut reply: Vec<u8> = vec![];
 
     let length_for_header: u16 =
-      self.payload.len() as u16 + MODBUS_UNIT_IDENTIFIER_LENGTH + MODBUS_FUNCTION_CODE_LENGTH;
+    self.payload.len() as u16 + MODBUS_UNIT_IDENTIFIER_LENGTH + MODBUS_FUNCTION_CODE_LENGTH;
 
     append_word_to_bytearray(&mut reply, self.transaction_identifier);
     append_word_to_bytearray(&mut reply, MODBUS_PROTOCOL_IDENTIFIER_TCP);
@@ -76,7 +76,8 @@ impl ModbusTelegram {
     append_byte_to_bytearray(&mut reply, self.function_code);
     append_bytearray_to_bytearray(&mut reply, &self.payload);
 
-    return Some(reply);
+	//return Some(reply);
+	Ok(reply)
   }
 
   pub fn get_expected_byte_count(&self) -> Option<u8> {

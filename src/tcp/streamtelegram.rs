@@ -29,37 +29,38 @@ fn read_telegram_from_stream(
 
 //	===============================================================================================
 
-fn write_telegram_to_stream(stream: &mut TcpStream, telegram: &ModbusTelegram) -> Result<bool, String> {
-  let mut reply: Result<bool, String> = Err("Tcp Write Failed".to_string());
+fn write_telegram_to_stream(stream: &mut TcpStream, telegram: &ModbusTelegram) -> Result<bool, ModbusTelegramError> {
+  let mut reply: Result<bool, ModbusTelegramError> ;
 
-  if let Some(bytes) = telegram.get_bytes() {
-    let response = stream.write_all(&bytes);
+	let bytes = telegram.get_bytes();
+	if bytes.is_ok(){
+		let response = stream.write_all(&bytes.unwrap());
 
-    if response.is_ok() {
-      reply = Ok(true);
-    }
-  }
+		if response.is_ok() {
+			// unwrap the success val from the reply
+			Ok(reply.unwrap())
+		  }
 
-  return reply;
+		else{
+			return Result::Err(ModbusTelegramError{message: "Could not write some or all bytes to the stream.".to_string() } );
+		}  
+	}
+	
+	else{
+		return Result::Err(ModbusTelegramError{message: "Could not get bytes from Modbus telegram.".to_string() } );
+	} 
 }
 
 //	===============================================================================================
 
-pub fn process_modbus_telegram(stream: &mut TcpStream, telegram: &Option<ModbusTelegram>) -> Option<ModbusTelegram> {
-  let mut reply: Option<ModbusTelegram> = None;
+pub fn process_modbus_telegram(stream: &mut TcpStream, telegram: &ModbusTelegram) -> Result<ModbusTelegram, ModbusTelegramError> {
+  let mut reply: ModbusTelegram;
 
-  if telegram.is_some() {
-    let write_telegram: &ModbusTelegram = telegram.as_ref().unwrap();
-    let write_response: Result<bool, String> = write_telegram_to_stream(stream, write_telegram);
-    if write_response.is_ok() {
-      let expected_bytes: Option<u8> = write_telegram.get_expected_byte_count();
-      let read_response: Result<ModbusTelegram, ModbusTelegramError> =
-        read_telegram_from_stream(stream, expected_bytes.unwrap());
-      if read_response.is_ok() {
-        reply = Some(read_response.unwrap());
-      }
-    }
-  }
-
-  return reply;
+    let write_telegram: &ModbusTelegram = telegram;
+    let write_response: Result<bool, ModbusTelegramError> = write_telegram_to_stream(stream, write_telegram);
+    let expected_bytes: Option<u8> = write_telegram.get_expected_byte_count();
+	  
+	let read_response = read_telegram_from_stream(stream, expected_bytes.unwrap())?;
+    
+	Ok(reply)
 }
