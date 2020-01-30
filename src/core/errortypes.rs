@@ -58,7 +58,7 @@ impl std::error::Error for CoilError {}
 impl From<std::io::Error> for CoilError {
   fn from(error: std::io::Error) -> Self {
     CoilError {
-      message: "".to_string(),
+      message: error.to_string(),
     }
   }
 }
@@ -82,7 +82,7 @@ impl std::error::Error for ModbusTelegramError {}
 impl From<std::io::Error> for ModbusTelegramError {
   fn from(error: std::io::Error) -> Self {
     ModbusTelegramError {
-      message: "".to_string(),
+      message: error.to_string(),
     }
   }
 }
@@ -107,7 +107,7 @@ impl std::error::Error for RegisterError {}
 impl From<std::io::Error> for RegisterError {
   fn from(error: std::io::Error) -> Self {
     RegisterError {
-      message: "".to_string(),
+      message: error.to_string(),
     }
   }
 }
@@ -131,7 +131,7 @@ impl std::error::Error for DataTransformError {}
 impl From<std::io::Error> for DataTransformError {
   fn from(error: std::io::Error) -> Self {
     DataTransformError {
-      message: "".to_string(),
+      message: error.to_string(),
     }
   }
 }
@@ -159,7 +159,7 @@ impl From<std::io::Error> for FunctionCodeError {
   fn from(error: std::io::Error) -> Self {
     FunctionCodeError {
       // TODO, fix this
-      message: "msg".to_string(),
+      message: error.to_string(),
       code: 0,
     }
   }
