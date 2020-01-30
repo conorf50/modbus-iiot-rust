@@ -52,7 +52,7 @@ pub fn create_request_read_coils ( transaction_identifier : u16, unit_identifier
 
 	if parameter_verification.is_ok() {
 		let payload : Vec< u8 > = prepare_payload_read_coils ( starting_address, quantity_of_coils );
-		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
+		let telegram : Result< ModbusTelegram, ModbusTelegramError > = ModbusTelegram::new ( transaction_identifier,
 										    							unit_identifier,
 																		FUNCTION_CODE_READ_COILS,
 																		&payload,
@@ -117,7 +117,7 @@ pub fn create_request_read_discrete_inputs ( transaction_identifier : u16, unit_
 		let payload : Vec< u8 > = prepare_payload_read_discrete_inputs ( starting_address, 
 																		 quantity_of_inputs );
 
-		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
+		let telegram : Result< ModbusTelegram, ModbusTelegramError> = ModbusTelegram::new ( transaction_identifier,
 																		unit_identifier,
 																		FUNCTION_CODE_READ_DISCRETE_INPUTS,
 																		&payload,
@@ -182,7 +182,7 @@ pub fn create_request_read_holding_registers ( transaction_identifier : u16, uni
 		let payload : Vec< u8 > = prepare_payload_read_holding_registers ( starting_address, 
 																		   quantity_of_registers );
 
-		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
+		let telegram : Result< ModbusTelegram, ModbusTelegramError > = ModbusTelegram::new ( transaction_identifier,
 																		unit_identifier,
 																		FUNCTION_CODE_READ_HOLDING_REGISTERS,
 																		&payload,
@@ -247,7 +247,7 @@ pub fn create_request_read_input_registers ( transaction_identifier : u16, unit_
 		let payload : Vec< u8 > = prepare_payload_read_input_registers ( starting_address, 
 																		 quantity_of_input_registers );
 
-		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
+		let telegram : Result< ModbusTelegram, ModbusTelegramError > = ModbusTelegram::new ( transaction_identifier,
 																		unit_identifier,
 																		FUNCTION_CODE_READ_INPUT_REGISTERS,
 																		&payload,
@@ -318,7 +318,7 @@ pub fn create_request_write_multiple_coils ( transaction_identifier : u16, unit_
 																		 quantity_of_outputs, 
 																		 &output_values );
 
-		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
+		let telegram : Result< ModbusTelegram , ModbusTelegramError> = ModbusTelegram::new ( transaction_identifier,
 																		unit_identifier,
 																		FUNCTION_CODE_WRITE_MULTIPLE_COILS,
 																		&payload,
@@ -391,7 +391,7 @@ pub fn create_request_write_multiple_registers ( transaction_identifier : u16, u
 		let payload : Vec< u8 > = prepare_payload_write_multiple_registers ( starting_address, 
 																			 &register_values );
 
-		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
+		let telegram : Result< ModbusTelegram , ModbusTelegramError> = ModbusTelegram::new ( transaction_identifier,
 																		unit_identifier,
 																		FUNCTION_CODE_WRITE_MULTIPLE_REGISTERS,
 																		&payload,
@@ -455,7 +455,7 @@ pub fn create_request_write_single_coil ( transaction_identifier : u16, unit_ide
 		let payload : Vec< u8 > = prepare_payload_write_single_coil ( output_address, 
 																	  output_value );
 
-		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
+		let telegram :  Result< ModbusTelegram , ModbusTelegramError> = ModbusTelegram::new ( transaction_identifier,
 																		unit_identifier,
 																		FUNCTION_CODE_WRITE_SINGLE_COIL,
 																		&payload,
@@ -518,7 +518,7 @@ pub fn create_request_write_single_register ( transaction_identifier : u16, unit
 		let payload : Vec< u8 > = prepare_payload_write_single_register ( register_address, 
 																		  register_value );
 
-		let telegram : Option< ModbusTelegram > = ModbusTelegram::new ( transaction_identifier,
+		let telegram :  Result< ModbusTelegram , ModbusTelegramError> = ModbusTelegram::new ( transaction_identifier,
 																		unit_identifier,
 																		FUNCTION_CODE_WRITE_SINGLE_REGISTER,
 																		&payload,
@@ -701,12 +701,21 @@ fn get_expected_byte_count_write_single_register () -> u8
 #[test]
 fn test_pack_telegram ()
 {
-	let test_data_1 : Option< ModbusTelegram > = None;
+
+	let test_values : Vec< u8 > = vec![ 0; 10 ];
+
+
+	let test_data_1 : Result< ModbusTelegram , ModbusTelegramError> = ModbusTelegram::new ( 0x0001,
+		0x31, 
+		4, 
+		&test_values, 
+		234 );
+
+
 	let result_1 : Result< ModbusTelegram, _> = pack_telegram ( test_data_1 );
 	assert! ( result_1.is_err () );
 
-	let test_values : Vec< u8 > = vec![ 0; 10 ];
-	let test_data_2 : Option< ModbusTelegram > = ModbusTelegram::new ( 0x0001, 
+	let test_data_2 : Result< ModbusTelegram, ModbusTelegramError > = ModbusTelegram::new ( 0x0001, 
 																	   0x01, 
 																	   0x01, 
 																	   &test_values, 
@@ -715,11 +724,11 @@ fn test_pack_telegram ()
 	assert! ( result_2.is_ok () );
 }
 
-fn pack_telegram ( telegram : Option< ModbusTelegram > ) -> Result< ModbusTelegram, ModbusTelegramError >
+fn pack_telegram ( telegram : Result< ModbusTelegram, ModbusTelegramError> ) -> Result< ModbusTelegram, ModbusTelegramError >
 {
 	let reply : Result< ModbusTelegram, ModbusTelegramError>;
 
-	if telegram.is_some ()
+	if telegram.is_ok()
 	{
 		reply = Ok( telegram.unwrap () );
 	}
@@ -983,7 +992,7 @@ fn test_prepare_response_read_coils ()
 	let  test_data : Vec< u8 > = vec![ 0x03, 0xCD, 0x6B, 0x05 ];
 
 	let result : Vec< bool > = prepare_response_read_coils ( &test_data, 
-															 0x0013 );
+															 0x0013 ).unwrap();
 	assert_eq! ( result.len (), 19 );
 	assert_eq! ( result[  0 ], true );
 	assert_eq! ( result[  1 ], false );
@@ -1006,19 +1015,16 @@ fn test_prepare_response_read_coils ()
 	assert_eq! ( result[ 18 ], true );
 }
 
-pub fn prepare_response_read_coils ( payload : &Vec< u8 >, coil_count : u16 ) -> Vec< bool >
+pub fn prepare_response_read_coils ( payload : &Vec< u8 >, coil_count : u16 ) -> Result<Vec< bool>, DataTransformError>
 {
 	let mut reply : Vec< bool > = vec![];
 
 	if is_payload_read_coil_length_valid (&payload)
 	{
-		if let Some( byte_count ) = extract_byte_from_bytearray ( &payload, 
-							 									  0 )
-		{
-			if let Some( coil_bytes ) = extract_bytes_from_bytearray ( &payload, 
-																	   1,
-																	   byte_count )
-			{
+		let byte_count = extract_byte_from_bytearray ( &payload, 0)?;
+		
+		let coil_bytes = extract_bytes_from_bytearray ( &payload, 1,byte_count)?;
+			
 				let mut byte_index : usize = 0;
 				let mut bit : u8 = 0;
 
@@ -1036,11 +1042,11 @@ pub fn prepare_response_read_coils ( payload : &Vec< u8 >, coil_count : u16 ) ->
 						bit += 1;
 					}
 				}
-			}
-		}
+			
+		
 	}
-
-	return reply;
+	Ok(reply)
+	//return reply;
 }
 
 //	===============================================================================================
@@ -1051,7 +1057,7 @@ fn test_prepare_response_read_discrete_inputs ()
 	let test_data : Vec< u8 > = vec![ 0x03, 0xAC, 0xDB, 0x35 ];
 
 	let result : Vec< bool > = prepare_response_read_discrete_inputs ( &test_data, 
-																	   0x0016 );
+																	   0x0016 ).unwrap();
 	assert_eq! ( result.len (), 22 );
 	assert_eq! ( result[  0 ], false );
 	assert_eq! ( result[  1 ], false );
@@ -1077,41 +1083,37 @@ fn test_prepare_response_read_discrete_inputs ()
 	assert_eq! ( result[ 21 ], true );
 }
 
-pub fn prepare_response_read_discrete_inputs ( payload : &Vec< u8 >, input_count : u16 ) -> Vec< bool >
+pub fn prepare_response_read_discrete_inputs ( payload : &Vec< u8 >, input_count : u16 ) -> Result<Vec< bool >,DataTransformError> 
 {
 	let mut reply : Vec< bool > = vec![];
 
 	if is_payload_read_coil_length_valid (&payload)
 	{
-		if let Some( byte_count ) = extract_byte_from_bytearray ( &payload, 
-																  0 )
-		{
-			if let Some( input_bytes ) = extract_bytes_from_bytearray ( &payload, 
-																		1, 
-																		byte_count )
+		let byte_count = extract_byte_from_bytearray ( &payload, 0)?;
+		
+		let input_bytes  = extract_bytes_from_bytearray ( &payload, 1, byte_count)?;
+			
+		let mut byte_index : usize = 0;
+		let mut bit : u8 = 0;
+
+		for _ in 0..input_count
 			{
-				let mut byte_index : usize = 0;
-				let mut bit : u8 = 0;
+				reply.push ( input_bytes[ byte_index ] & ( 1 << bit ) != 0 );
 
-				for _ in 0..input_count
-				{
-					reply.push ( input_bytes[ byte_index ] & ( 1 << bit ) != 0 );
-
-					if bit == 7
+				if bit == 7
 					{
 						byte_index += 1;
 						bit = 0;
 					}
-					else
+				else
 					{
 						bit += 1;
 					}
 				}
-			}
-		}
+			
+	
 	}
-
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
@@ -1121,35 +1123,32 @@ fn test_prepare_response_read_holding_registers ()
 {
 	let test_data : Vec< u8 > = vec![ 0x06, 0xF0, 0x0F, 0x00, 0xFF, 0xFF, 0x00 ];
 
-	let result : Vec< u16 > = prepare_response_read_holding_registers ( &test_data );
+	let result : Vec< u16 > = prepare_response_read_holding_registers ( &test_data ).unwrap();
 	assert_eq! ( result.len (), 3 );
 	assert_eq! ( result[ 0 ], 0xF00F );
 	assert_eq! ( result[ 1 ], 0x00FF );
 	assert_eq! ( result[ 2 ], 0xFF00 );
 }
 
-pub fn prepare_response_read_holding_registers ( payload : &Vec< u8 > ) -> Vec< u16 >
+pub fn prepare_response_read_holding_registers ( payload : &Vec< u8 > ) -> Result<Vec< u16 >, DataTransformError>
 {
 	let mut reply : Vec< u16 > = vec![];
 
 	if is_payload_read_register_length_valid (&payload)
 	{
-		if let Some( byte_count ) = extract_byte_from_bytearray ( &payload, 
-																  0 )
-		{
-			if let Some( register_values ) = extract_bytes_from_bytearray ( &payload, 
-																			1,
-																			byte_count )
-			{
-				let word_count : u8 = ( byte_count / 2 ) as u8;
-				reply = transform_bytes_to_words ( &register_values, 
+		let byte_count = extract_byte_from_bytearray ( &payload, 0)?;
+		
+		let register_values = extract_bytes_from_bytearray ( &payload, 1,byte_count)?;
+			
+		let word_count : u8 = ( byte_count / 2 ) as u8;
+		reply = transform_bytes_to_words ( &register_values, 
 												   0,
 												   word_count );
-			}
-		}		
+			
+		
 	}
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
@@ -1159,35 +1158,32 @@ fn test_prepare_response_read_input_registers ()
 {
 	let test_data : Vec< u8 > = vec![ 0x06, 0xF0, 0x0F, 0x00, 0xFF, 0xFF, 0x00 ];
 
-	let result : Vec< u16 > = prepare_response_read_input_registers ( &test_data );
+	let result : Vec< u16 > = prepare_response_read_input_registers ( &test_data ).unwrap();
 	assert_eq! ( result.len (), 3 );
 	assert_eq! ( result[ 0 ], 0xF00F );
 	assert_eq! ( result[ 1 ], 0x00FF );
 	assert_eq! ( result[ 2 ], 0xFF00 );
 }
 
-pub fn prepare_response_read_input_registers ( payload : &Vec< u8 > ) -> Vec< u16 >
+pub fn prepare_response_read_input_registers ( payload : &Vec< u8 > ) -> Result<Vec< u16 >, DataTransformError>
 {
 	let mut reply : Vec< u16 > = vec![];
 
 	if is_payload_read_register_length_valid (&payload)
 	{
-		if let Some( byte_count ) = extract_byte_from_bytearray ( &payload, 
-																  0 )
-		{
-			if let Some( register_values ) = extract_bytes_from_bytearray ( &payload, 
+		let byte_count = extract_byte_from_bytearray ( &payload, 
+																  0 )?;
+		let register_values = extract_bytes_from_bytearray ( &payload, 
 																			1,
-																			byte_count )
-			{
-				let words : u8 = ( byte_count / 2 ) as u8;
-				reply = transform_bytes_to_words ( &register_values, 
+																			byte_count )?;
+		let words : u8 = ( byte_count / 2 ) as u8;
+		reply = transform_bytes_to_words ( &register_values, 
 												   0,
 												   words );
-			}
-		}		
+							
 	}
 
-	return reply;
+	Ok(reply)
 }
 
 //	===============================================================================================
@@ -1224,32 +1220,31 @@ fn test_prepare_response_write_multiple_registers ()
 {
 	let test_data : Vec< u8 > = vec![ 0x00, 0x01, 0x00, 0xFF ];
 
-	let result : Vec< u16 > = prepare_response_write_multiple_registers ( &test_data );
+	let result : Vec< u16 > = prepare_response_write_multiple_registers ( &test_data ).unwrap();
 	assert_eq! ( result.len (), 2 );
 	assert_eq! ( result[ 0 ], 0x0001 );
 	assert_eq! ( result[ 1 ], 0x00FF );
 }
 
-pub fn prepare_response_write_multiple_registers ( payload : &Vec< u8 > ) -> Vec< u16 >
+pub fn prepare_response_write_multiple_registers ( payload : &Vec< u8 > ) -> Result<Vec< u16 >, DataTransformError>
 {
 	let mut reply : Vec< u16 > = vec![];
 
 	if is_payload_write_length_valid ( &payload )
 	{
-		let option_address : Option< u16 > = extract_word_from_bytearray ( payload, 
-																		   0 );
-		let option_quantity : Option< u16 > = extract_word_from_bytearray ( payload, 
-																			2 );
-
-		if option_address.is_some () &&
-		   option_quantity.is_some ()
-		{
-			reply.push ( option_address.unwrap () );
-			reply.push ( option_quantity.unwrap () );
-		}
+		let option_address : u16 = extract_word_from_bytearray ( payload, 
+																		   0 )?;
+		let option_quantity : u16 = extract_word_from_bytearray ( payload, 
+																			2 )?;
+		reply.push ( option_address);
+		reply.push ( option_quantity);
+	
+		Ok(reply)
 	}
 
-	return reply;
+	else{
+		return Result::Err(DataTransformError{message: "Payload write length was invalid".to_string() } );
+	}
 }
 
 //	===============================================================================================
@@ -1259,32 +1254,31 @@ fn test_prepare_response_write_single_coil ()
 {
 	let test_data_1 : Vec< u8 > = vec![ 0x00, 0x01, 0xFF, 0x00 ];
 
-	let result_1 : Vec< bool > = prepare_response_write_single_coil ( &test_data_1 );
+	let result_1 : Vec< bool > = prepare_response_write_single_coil ( &test_data_1 ).unwrap();
 	assert_eq! ( result_1.len (), 1 );
 	assert_eq! ( result_1[ 0 ], true );
 
 	let test_data_2 : Vec< u8 > = vec![ 0x00, 0x01, 0x01, 0x01 ];
 
-	let result_2 : Vec< bool > = prepare_response_write_single_coil ( &test_data_2 );
+	let result_2 : Vec< bool > = prepare_response_write_single_coil ( &test_data_2 ).unwrap();
 	assert_eq! ( result_2.len (), 1 );
 	assert_eq! ( result_2[ 0 ], false );
 
 	let test_data_3 : Vec< u8 > = vec![ 0x00, 0x01, 0x0F, 0xF0 ];
 
-	let result_3 : Vec< bool > = prepare_response_write_single_coil ( &test_data_3 );
+	let result_3 : Vec< bool > = prepare_response_write_single_coil ( &test_data_3 ).unwrap();
 	assert_eq! ( result_3.len (), 1 );
 	assert_eq! ( result_3[ 0 ], false );
 }
 
-pub fn prepare_response_write_single_coil ( payload : &Vec< u8 > ) -> Vec< bool >
+pub fn prepare_response_write_single_coil ( payload : &Vec< u8 > ) -> Result<Vec< bool > , DataTransformError>
 {
 	let mut reply : Vec< bool > = vec![];
 
 	if is_payload_write_length_valid ( &payload )
 	{
-		if let Some( word ) = extract_word_from_bytearray ( payload, 
-															2 )
-		{
+		let word = extract_word_from_bytearray ( payload, 2)?;
+		
 			if word == 0xFF00
 			{
 				reply.push ( true );
@@ -1293,10 +1287,10 @@ pub fn prepare_response_write_single_coil ( payload : &Vec< u8 > ) -> Vec< bool 
 			{
 				reply.push ( false );
 			}
-		}
+		
 	}
 
-	return reply;
+	Ok (reply)
 }
 
 //	===============================================================================================
