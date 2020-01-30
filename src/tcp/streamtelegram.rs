@@ -17,9 +17,11 @@ fn read_telegram_from_stream ( stream : &mut TcpStream, expected_bytes : u8 ) ->
 
 	if response.is_ok ()
 	{
-        let telegram = ModbusTelegram::new_from_bytes ( &data )?;
-        
-        return Result::Ok(telegram);
+		let telegram = ModbusTelegram::new_from_bytes ( &data );
+		
+		if telegram.is_ok(){
+			return Result::Ok(telegram.unwrap());
+		}
         
 	}
 
@@ -60,7 +62,7 @@ pub fn process_modbus_telegram ( stream : &mut TcpStream, telegram : &Option< Mo
 		if write_response.is_ok ()
 		{
 			let expected_bytes : Option< u8 > = write_telegram.get_expected_byte_count ();
-			let read_response : Result< ModbusTelegram, String > = read_telegram_from_stream ( stream, 
+			let read_response : Result< ModbusTelegram, ModbusTelegramError > = read_telegram_from_stream ( stream, 
 																							   expected_bytes.unwrap () );
 			if read_response.is_ok ()
 			{

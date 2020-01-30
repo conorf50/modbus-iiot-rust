@@ -231,16 +231,8 @@ impl EthernetMaster for TcpClient
 				}				
 			}
 			else {
-				//reply = ModbusReturnCoils::Bad( ReturnBad::new_with_message ( "created modbus telegram is invalid" ) );
 				return Result::Err(ModbusTelegramError{message: "Created modbus telegram is not valid".to_string() });
-
 			}
-		// }
-		// else {
-		// 	return Result::Err(ModbusTelegramError{message: request_telegram.err().unwrap().to_string() });
-
-		// }
-		// return reply;
 	}
 
 	fn read_discrete_inputs ( &mut self, starting_address : u16, quantity_of_inputs : u16 ) -> ModbusReturnCoils
