@@ -230,9 +230,9 @@ impl EthernetMaster for TcpClient {
   }
 
   fn read_discrete_inputs(&mut self, starting_address: u16, quantity_of_inputs: u16) -> Result<ModbusReturnCoils, ModbusTelegramError> {
-    let reply: ModbusReturnCoils;
-
-    let start_time: Timestamp = Timestamp::new();
+    
+	let start_time: Timestamp = Timestamp::new();
+	
     let request_telegram = create_request_read_discrete_inputs(
       self.last_transaction_id,
       self.unit_identifier,
@@ -240,91 +240,82 @@ impl EthernetMaster for TcpClient {
       quantity_of_inputs,
     )?;
 
-      //let request: Option<ModbusTelegram> = Some(request_telegram.unwrap());
-
 	let response = self.process_telegram(&request_telegram)?;
 	
     if verify_function_code(&request_telegram, &response) {
 
         let response_data = prepare_response_read_discrete_inputs(&response.get_payload().unwrap(), quantity_of_inputs);
 		if response_data.is_ok(){
+			return Result::Ok(process_response_of_coils(response_data.unwrap(), &start_time));
 		}
-
-          reply = process_response_of_coils(response_data, &start_time);
+		else {
+			return Result::Err(ModbusTelegramError{message: "Could not verify response data was correct.".to_string() } );
 		}
-	 else {
-          reply = ModbusReturnCoils::Bad(ReturnBad::new_with_codes(response.get_function_code().unwrap(), 1));
-        }
-       else {
-        reply = ModbusReturnCoils::Bad(ReturnBad::new_with_message("created modbus telegram is invalid"));
-      }
-     else {
-      reply = ModbusReturnCoils::Bad(ReturnBad::new_with_message(&request_telegram.err().unwrap()));
-    }
+	}
 
-    return reply;
+	else {
+		return Result::Err(ModbusTelegramError{message: "Created modbus telgram is invalid.".to_string() } );
+	}
   }
 
-  fn read_holding_registers(&mut self, starting_address: u16, quantity_of_registers: u16) -> ModbusReturnRegisters {
-    let reply: ModbusReturnRegisters;
+  fn read_holding_registers(&mut self, starting_address: u16, quantity_of_registers: u16) -> Result<ModbusReturnRegisters, ModbusTelegramError> {
 
     let start_time: Timestamp = Timestamp::new();
-    let request_telegram: Result<ModbusTelegram, ModbusTelegramError> = create_request_read_holding_registers(
+    let request_telegram = create_request_read_holding_registers(
       self.last_transaction_id,
       self.unit_identifier,
       starting_address,
       quantity_of_registers,
-    );
+    )?;
+	
+	let response = self.process_telegram(&request_telegram)?;
 
-    if request_telegram.is_ok() {
-      let request: Option<ModbusTelegram> = Some(request_telegram.unwrap());
+    if verify_function_code(&request_telegram, &response) {
+		  
+		let response_data = prepare_response_read_holding_registers(&response.get_payload().unwrap());
+		if response_data.is_ok(){
+			return Result::Ok (process_response_of_registers(response_data.unwrap(), &start_time));
 
-      if let Some(response) = self.process_telegram(&request) {
-        if verify_function_code(&request.unwrap(), &response) {
-          let response_data: Vec<u16> = prepare_response_read_holding_registers(&response.get_payload().unwrap());
+		}
+		else {
+			return Result::Err(ModbusTelegramError{message: "Could not verify response data was correct.".to_string() } );
+		}
+	} 
 
-          reply = process_response_of_registers(response_data, &start_time);
-        } else {
-          reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_codes(response.get_function_code().unwrap(), 1));
-        }
-      } else {
-        reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_message("created modbus telegram is invalid"));
-      }
-    } else {
-      reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_message(&request_telegram.err().unwrap()));
+     else {
+		return Result::Err(ModbusTelegramError{message: "Created modbus telegram was incorrect.".to_string() } );
     }
 
-    return reply;
   }
 
-  fn read_input_registers(&mut self, starting_address: u16, quantity_of_input_registers: u16) -> ModbusReturnRegisters {
-    let reply: ModbusReturnRegisters;
-
+  fn read_input_registers(&mut self, starting_address: u16, quantity_of_input_registers: u16) -> Result<ModbusReturnRegisters, ModbusTelegramError> {
+    
     let start_time: Timestamp = Timestamp::new();
-    let request_telegram: Result<ModbusTelegram, ModbusTelegramError> = create_request_read_input_registers(
+    let request_telegram = create_request_read_input_registers(
       self.last_transaction_id,
       self.unit_identifier,
       starting_address,
       quantity_of_input_registers,
-    );
+	)?;
 
-    if request_telegram.is_ok() {
-      let request: Option<ModbusTelegram> = Some(request_telegram.unwrap());
+	  let response = self.process_telegram(&request_telegram)?; 
+	  
 
-      if let Some(response) = self.process_telegram(&request) {
-        if verify_function_code(&request.unwrap(), &response) {
-          let response_data: Vec<u16> = prepare_response_read_input_registers(&response.get_payload().unwrap());
+        if verify_function_code(&request_telegram, &response) {
+
+          let response_data =  prepare_response_read_input_registers(&response.get_payload().unwrap());
 
           reply = process_response_of_registers(response_data, &start_time);
         } else {
           reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_codes(response.get_function_code().unwrap(), 1));
         }
-      } else {
+	  
+		else {
         reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_message("created modbus telegram is invalid"));
       }
-    } else {
-      reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_message(&request_telegram.err().unwrap()));
-    }
+    //  else {
+    //   reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_message(&request_telegram.err().unwrap()));
+    // }
 
     return reply;
   }
