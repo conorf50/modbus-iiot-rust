@@ -234,8 +234,8 @@ fn test_create_request_read_input_registers() {
   assert!(function_code.is_some());
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_READ_INPUT_REGISTERS);
 
-  let telegram_bytes: Option<Vec<u8>> = telegram.get_bytes();
-  assert!(telegram_bytes.is_some());
+  let telegram_bytes: Vec<u8> = telegram.get_bytes();
+  assert!(telegram_bytes.is_ok());
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
   assert_eq!(bytes.len(), 12);
@@ -1123,20 +1123,20 @@ pub fn prepare_response_read_input_registers(payload: &Vec<u8>) -> Result<Vec<u1
 fn test_prepare_response_write_multiple_coils() {
   let test_data: Vec<u8> = vec![0x00, 0x01, 0x00, 0x03];
 
-  let result: Vec<u16> = prepare_response_write_multiple_coils(&test_data);
+  let result: Vec<u16> = prepare_response_write_multiple_coils(&test_data).unwrap();
   assert_eq!(result.len(), 2);
   assert_eq!(result[0], 0x0001);
   assert_eq!(result[1], 0x0003);
 }
 
-pub fn prepare_response_write_multiple_coils(payload: &Vec<u8>) -> Vec<u16> {
+pub fn prepare_response_write_multiple_coils(payload: &Vec<u8>) -> Result<Vec<u16>, DataTransformError> {
   let mut reply: Vec<u16> = vec![];
 
   if is_payload_write_length_valid(&payload) {
     reply = transform_bytes_to_words(&payload, 0, 2);
   }
 
-  return reply;
+  Ok(reply)
 }
 
 //	===============================================================================================
@@ -1213,20 +1213,21 @@ pub fn prepare_response_write_single_coil(payload: &Vec<u8>) -> Result<Vec<bool>
 fn test_prepare_response_write_single_register() {
   let test_data: Vec<u8> = vec![0x00, 0x01, 0x00, 0x03];
 
-  let result: Vec<u16> = prepare_response_write_single_register(&test_data);
+  let result: Vec<u16> = prepare_response_write_single_register(&test_data).unwrap();
   assert_eq!(result.len(), 2);
   assert_eq!(result[0], 0x0001);
   assert_eq!(result[1], 0x0003);
 }
 
-pub fn prepare_response_write_single_register(payload: &Vec<u8>) -> Vec<u16> {
+pub fn prepare_response_write_single_register(payload: &Vec<u8>) -> Result<Vec<u16>, DataTransformError> {
   let mut reply: Vec<u16> = vec![];
 
   if is_payload_write_length_valid(&payload) {
     reply = transform_bytes_to_words(&payload, 0, 2);
   }
 
-  return reply;
+  Ok(reply)
+  //return reply;
 }
 
 //	===============================================================================================
