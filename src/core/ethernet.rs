@@ -231,7 +231,7 @@ pub trait EthernetMaster {
     starting_address: u16,
     quantity_of_outputs: u16,
     outputs_value: Vec<u8>,
-  ) -> Result<ModbusReturnRegisters, ModbusTelegramError>;
+  ) -> Result<ModbusReturnCoils, ModbusTelegramError>;
 
   ///	MODBUS Function Code 16 (0x10)
   /// This function code is used to write a block of contiguous
