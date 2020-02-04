@@ -462,7 +462,7 @@ fn test_response_of_coils() {
   assert!(result_2.is_bad());
 }
 
-fn process_response_of_coils(response_data: Vec<bool>, start_time: &Timestamp) -> ModbusReturnCoils {
+fn process_response_of_coils(response_data: Vec<u16>, start_time: &Timestamp) -> ModbusReturnCoils {
   let reply: ModbusReturnCoils;
 
   if response_data.len() > 0 {

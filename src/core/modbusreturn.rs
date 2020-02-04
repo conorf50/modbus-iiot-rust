@@ -5,7 +5,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum ModbusReturnCoils {
   Bad(ReturnBad),
-  Good(ReturnGood<bool>),
+  Good(ReturnGood<u16>),
   None,
 }
 
