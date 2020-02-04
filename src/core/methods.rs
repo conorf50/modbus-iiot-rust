@@ -12,7 +12,7 @@ fn test_create_request_read_coils() {
   let starting_address: u16 = 0x00FF;
   let quantity_of_coils: u16 = 0x000A;
 
-  let result: Result<ModbusTelegram, ModbusTelegramError> = create_request_read_coils(
+  let result = create_request_read_coils(
     transaction_identifier,
     unit_identifier,
     starting_address,
@@ -25,8 +25,8 @@ fn test_create_request_read_coils() {
   assert!(function_code.is_some());
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_READ_COILS);
 
-  let telegram_bytes: Option<Vec<u8>> = telegram.get_bytes();
-  assert!(telegram_bytes.is_some());
+  let telegram_bytes = telegram.get_bytes();
+  assert!(telegram_bytes.is_ok());
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
   assert_eq!(bytes.len(), 12);
@@ -81,7 +81,7 @@ fn test_create_request_read_discrete_inputs() {
   let starting_address: u16 = 0x00FF;
   let quantity_of_inputs: u16 = 0x000A;
 
-  let result: Result<ModbusTelegram, ModbusTelegramError> = create_request_read_discrete_inputs(
+  let result = create_request_read_discrete_inputs(
     transaction_identifier,
     unit_identifier,
     starting_address,
@@ -94,8 +94,8 @@ fn test_create_request_read_discrete_inputs() {
   assert!(function_code.is_some());
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_READ_DISCRETE_INPUTS);
 
-  let telegram_bytes: Option<Vec<u8>> = telegram.get_bytes();
-  assert!(telegram_bytes.is_some());
+  let telegram_bytes = telegram.get_bytes();
+  assert!(telegram_bytes.is_ok());
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
   assert_eq!(bytes.len(), 12);
@@ -152,7 +152,7 @@ fn test_create_request_read_holding_registers() {
   let starting_address: u16 = 0x00FF;
   let quantity_of_registers: u16 = 0x000A;
 
-  let result: Result<ModbusTelegram, ModbusTelegramError> = create_request_read_holding_registers(
+  let result = create_request_read_holding_registers(
     transaction_identifier,
     unit_identifier,
     starting_address,
@@ -161,12 +161,12 @@ fn test_create_request_read_holding_registers() {
   assert!(result.is_ok());
 
   let telegram: ModbusTelegram = result.unwrap();
-  let function_code: Option<u8> = telegram.get_function_code();
+  let function_code = telegram.get_function_code();
   assert!(function_code.is_some());
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_READ_HOLDING_REGISTERS);
 
-  let telegram_bytes: Option<Vec<u8>> = telegram.get_bytes();
-  assert!(telegram_bytes.is_some());
+  let telegram_bytes = telegram.get_bytes();
+  assert!(telegram_bytes.is_ok());
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
   assert_eq!(bytes.len(), 12);
@@ -221,7 +221,7 @@ fn test_create_request_read_input_registers() {
   let starting_address: u16 = 0x00FF;
   let quantity_of_input_registers: u16 = 0x000A;
 
-  let result: Result<ModbusTelegram, ModbusTelegramError> = create_request_read_input_registers(
+  let result = create_request_read_input_registers(
     transaction_identifier,
     unit_identifier,
     starting_address,
@@ -234,7 +234,7 @@ fn test_create_request_read_input_registers() {
   assert!(function_code.is_some());
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_READ_INPUT_REGISTERS);
 
-  let telegram_bytes: Vec<u8> = telegram.get_bytes();
+  let telegram_bytes = telegram.get_bytes();
   assert!(telegram_bytes.is_ok());
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
@@ -307,8 +307,8 @@ fn test_create_request_write_multiple_coils() {
   assert!(function_code.is_some(),);
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_WRITE_MULTIPLE_COILS);
 
-  let telegram_bytes: Option<Vec<u8>> = telegram.get_bytes();
-  assert!(telegram_bytes.is_some());
+  let telegram_bytes: Result<Vec<u8>, DataTransformError> = telegram.get_bytes();
+  assert!(telegram_bytes.is_ok());
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
   assert_eq!(bytes.len(), 16);
@@ -380,8 +380,8 @@ fn test_create_request_write_multiple_registers() {
   assert!(function_code.is_some());
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_WRITE_MULTIPLE_REGISTERS);
 
-  let telegram_bytes: Option<Vec<u8>> = telegram.get_bytes();
-  assert!(telegram_bytes.is_some());
+  let telegram_bytes: Result<Vec<u8>, DataTransformError> = telegram.get_bytes();
+  assert!(telegram_bytes.is_ok());
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
   assert_eq!(bytes.len(), 21);
@@ -455,8 +455,8 @@ fn test_create_request_write_single_coil() {
   assert!(function_code.is_some());
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_WRITE_SINGLE_COIL);
 
-  let telegram_bytes: Option<Vec<u8>> = telegram.get_bytes();
-  assert!(telegram_bytes.is_some());
+  let telegram_bytes: Result<Vec<u8>, DataTransformError> = telegram.get_bytes();
+  assert!(telegram_bytes.is_ok());
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
   assert_eq!(bytes.len(), 12);
@@ -480,7 +480,6 @@ pub fn create_request_write_single_coil(
   output_address: u16,
   output_value: u16,
 ) -> Result<ModbusTelegram, ModbusTelegramError> {
-  let reply: Result<ModbusTelegram, CoilError>;
 
   let parameter_verification: Result<bool, CoilError> = verify_parameter_write_single_coil(output_value);
 
@@ -525,8 +524,8 @@ fn test_create_request_write_single_register() {
   assert!(function_code.is_some());
   assert_eq!(function_code.unwrap(), FUNCTION_CODE_WRITE_SINGLE_REGISTER);
 
-  let telegram_bytes: Option<Vec<u8>> = telegram.get_bytes();
-  assert!(telegram_bytes.is_some(), true);
+  let telegram_bytes: Result<Vec<u8>, DataTransformError> = telegram.get_bytes();
+  assert!(telegram_bytes.is_ok(), true);
 
   let bytes: Vec<u8> = telegram_bytes.unwrap();
   assert_eq!(bytes.len(), 12);
@@ -1718,7 +1717,7 @@ fn test_verify_parameter_write_single_coil() {
 }
 
 fn verify_parameter_write_single_coil(output_value: u16) -> Result<bool, CoilError> {
-  let reply: bool = false;
+  let mut reply: bool = false;
 
   if !(output_value == 0x0000 || output_value == 0xFF00) {
     return Result::Err(CoilError {
