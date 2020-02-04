@@ -187,11 +187,15 @@ fn count_up_last_transaction_id(last_transaction_id: u16) -> u16 {
 //	===============================================================================================
 
 impl EthernetMaster for TcpClient {
+ 
+ 
+ 
   fn read_coils(
     &mut self,
     starting_address: u16,
     quantity_of_coils: u16,
   ) -> Result<ModbusReturnCoils, ModbusTelegramError> {
+
     let reply: Result<ModbusReturnCoils, ModbusTelegramError>;
 
     let start_time: Timestamp = Timestamp::new();
@@ -378,7 +382,7 @@ impl EthernetMaster for TcpClient {
         }
   }
 
-  fn write_multiple_coils( &mut self, starting_address: u16, quantity_of_outputs: u16, outputs_value: Vec<u8>,) -> Result<ModbusReturnCoils, ModbusTelegramError> {
+  fn write_multiple_coils( &mut self, starting_address: u16, quantity_of_outputs: u16, outputs_value: Vec<u8>,) -> Result<ModbusReturnRegisters, ModbusTelegramError> {
 
     let start_time: Timestamp = Timestamp::new();
     let request_telegram = create_request_write_multiple_coils(
@@ -397,12 +401,11 @@ impl EthernetMaster for TcpClient {
           let response_data = prepare_response_write_multiple_coils(&response.get_payload().unwrap());
 
           if response_data.is_ok(){
-            return Result::Ok (process_response_of_coils(response_data.unwrap(), &start_time));
+            return Result::Ok (process_response_of_registers(response_data.unwrap(), &start_time));
           }
           else {
             return Result::Err(ModbusTelegramError{message: "Could not verify response data was correct.".to_string() } );
           }
-          //reply = process_response_of_registers(response_data, &start_time);
         }
 
 
@@ -462,7 +465,7 @@ fn test_response_of_coils() {
   assert!(result_2.is_bad());
 }
 
-fn process_response_of_coils(response_data: Vec<u16>, start_time: &Timestamp) -> ModbusReturnCoils {
+fn process_response_of_coils(response_data: Vec<bool>, start_time: &Timestamp) -> ModbusReturnCoils {
   let reply: ModbusReturnCoils;
 
   if response_data.len() > 0 {
