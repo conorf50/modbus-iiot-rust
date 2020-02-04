@@ -138,6 +138,106 @@ fn test_modbus_return_coils_on_none() {
 
 //	===============================================================================================
 
+
+#[derive(Debug)]
+pub enum ModbusMultiCoils {
+  Bad(ReturnBad),
+  Good(ReturnGood<u16>),
+  None,
+}
+
+impl ModbusMultiCoils {
+  pub fn is_bad(&self) -> bool {
+    let reply: bool;
+
+    match *self {
+      ModbusMultiCoils::Bad(_) => {
+        reply = true;
+      }
+      _ => {
+        reply = false;
+      }
+    }
+
+    return reply;
+  }
+
+  pub fn is_good(&self) -> bool {
+    let reply: bool;
+
+    match *self {
+      ModbusMultiCoils::Good(_) => {
+        reply = true;
+      }
+      _ => {
+        reply = false;
+      }
+    }
+
+    return reply;
+  }
+
+  pub fn is_none(&self) -> bool {
+    let reply: bool;
+
+    match *self {
+      ModbusMultiCoils::None => {
+        reply = true;
+      }
+      _ => {
+        reply = false;
+      }
+    }
+
+    return reply;
+  }
+
+  pub fn is_some(&self) -> bool {
+    let reply: bool;
+
+    match *self {
+      ModbusMultiCoils::Bad(_) => {
+        reply = true;
+      }
+      ModbusMultiCoils::Good(_) => {
+        reply = true;
+      }
+      _ => {
+        reply = false;
+      }
+    }
+
+    return reply;
+  }
+
+  pub fn unwrap_bad(self) -> ReturnBad {
+    let reply: ReturnBad;
+
+    match self {
+      ModbusMultiCoils::Bad(bad) => reply = bad,
+      ModbusMultiCoils::Good(_) => panic!("called `unwrap_bad()` on a `Good` value"),
+      ModbusMultiCoils::None => panic!("called `unwrap_bad()` on a `None` value"),
+    };
+
+    return reply;
+  }
+
+  pub fn unwrap_good(self) -> ReturnGood<u16> {
+    let reply: ReturnGood<u16>;
+
+    match self {
+      ModbusMultiCoils::Bad(_) => panic!("called `unwrap_good()` on a `Bad` value"),
+      ModbusMultiCoils::Good(good) => reply = good,
+      ModbusMultiCoils::None => panic!("called `unwrap_good()` on a `None` value"),
+    };
+
+    return reply;
+  }
+}
+
+
+//	===============================================================================================
+
 impl fmt::Display for ModbusReturnCoils {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     let state: &str;

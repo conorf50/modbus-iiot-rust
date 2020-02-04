@@ -378,7 +378,7 @@ impl EthernetMaster for TcpClient {
         }
   }
 
-  fn write_multiple_coils( &mut self, starting_address: u16, quantity_of_outputs: u16, outputs_value: Vec<u8>,) -> Result<ModbusReturnRegisters, ModbusTelegramError> {
+  fn write_multiple_coils( &mut self, starting_address: u16, quantity_of_outputs: u16, outputs_value: Vec<u8>,) -> Result<ModbusReturnCoils, ModbusTelegramError> {
 
     let start_time: Timestamp = Timestamp::new();
     let request_telegram = create_request_write_multiple_coils(
@@ -492,6 +492,7 @@ fn test_process_response_of_registers() {
 fn process_response_of_registers(response_data: Vec<u16>, start_time: &Timestamp) -> ModbusReturnRegisters {
   let reply: ModbusReturnRegisters;
 
+  //todo increase exception checking here (define max length)
   if response_data.len() > 0 {
     reply = ModbusReturnRegisters::Good(ReturnGood::new(response_data, start_time.elapsed_milliseconds()));
   } else {
