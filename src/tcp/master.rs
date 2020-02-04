@@ -112,9 +112,9 @@ impl TcpClient {
 
     let timeout: Duration = Duration::from_millis(500);
 
-    let _ = &connection.set_read_timeout(Some(timeout));
-    let _ = &connection.set_write_timeout(Some(timeout));
-    let _ = &connection.set_nodelay(true);
+    connection.set_read_timeout(Some(timeout));
+    connection.set_write_timeout(Some(timeout));
+    connection.set_nodelay(true);
 
     //self.stream = Some(connection);
 
@@ -417,37 +417,33 @@ impl EthernetMaster for TcpClient {
 
   }
 
-  fn write_multiple_registers(&mut self, starting_address: u16, register_values: Vec<u16>) -> ModbusReturnRegisters {
-    let reply: ModbusReturnRegisters;
+  fn write_multiple_registers(&mut self, starting_address: u16, register_values: Vec<u16>) -> Result<ModbusReturnRegisters, ModbusTelegramError> {
 
     let start_time: Timestamp = Timestamp::new();
-    let request_telegram: Result<ModbusTelegram, ModbusTelegramError> = create_request_write_multiple_registers(
+    let request_telegram = create_request_write_multiple_registers(
       self.last_transaction_id,
       self.unit_identifier,
       starting_address,
       register_values,
-    );
+    )?;
 
-    if request_telegram.is_ok() {
-      let request: Option<ModbusTelegram> = Some(request_telegram.unwrap());
+      let response = self.process_telegram(&request_telegram)?;
 
-      if let Some(response) = self.process_telegram(&request) {
-        if verify_function_code(&request.unwrap(), &response) {
-          let response_data: Vec<u16> = prepare_response_write_multiple_registers(&response.get_payload().unwrap());
+        if verify_function_code(&request_telegram, &response) {
+          let response_data = prepare_response_write_multiple_registers(&response.get_payload().unwrap());
 
-          reply = process_response_of_registers(response_data, &start_time);
-        } else {
-          reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_codes(response.get_function_code().unwrap(), 1));
+          if response_data.is_ok(){
+            return Result::Ok (process_response_of_registers(response_data.unwrap(), &start_time));
+          }
+          else {
+            return Result::Err(ModbusTelegramError{message: "Could not verify response data was correct.".to_string() } );
+          }
+
+        }    
+       else {
+          return Result::Err(ModbusTelegramError{message: "Created modbus telegram was incorrect.".to_string() } );
         }
-      } else {
-        reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_message("created modbus telegram is invalid"));
       }
-    } else {
-      reply = ModbusReturnRegisters::Bad(ReturnBad::new_with_message(&request_telegram.err().unwrap()));
-    }
-
-    return reply;
-  }
 }
 
 //	===============================================================================================
@@ -511,24 +507,28 @@ impl MasterAccess for TcpClient {
   fn read_coils(&mut self, address: u16, quantity: u16) -> Vec<CoilValue> {
     let reply: Vec<CoilValue>;
 
-    let response: ModbusReturnCoils = EthernetMaster::read_coils(self, address, quantity);
+    let response = EthernetMaster::read_coils(self, address, quantity);
 
-    if response.is_good() {
-      reply = transform_modbus_return_coils(response);
+    if response.is_ok() {
+      
+      reply = transform_modbus_return_coils(response.unwrap());
+      //Ok(reply);
+
     } else {
       reply = vec![];
+      //Ok (reply);
     }
 
-    return reply;
+   return reply;
   }
 
   fn read_discrete_inputs(&mut self, address: u16, quantity: u16) -> Vec<CoilValue> {
     let reply: Vec<CoilValue>;
 
-    let response: ModbusReturnCoils = EthernetMaster::read_discrete_inputs(self, address, quantity);
+    let response = EthernetMaster::read_discrete_inputs(self, address, quantity);
 
-    if response.is_good() {
-      reply = transform_modbus_return_coils(response);
+    if response.is_ok() {
+      reply = transform_modbus_return_coils(response.unwrap());
     } else {
       reply = vec![];
     }
@@ -539,10 +539,10 @@ impl MasterAccess for TcpClient {
   fn read_holding_registers(&mut self, address: u16, quantity: u16) -> Vec<u16> {
     let reply: Vec<u16>;
 
-    let response: ModbusReturnRegisters = EthernetMaster::read_holding_registers(self, address, quantity);
+    let response = EthernetMaster::read_holding_registers(self, address, quantity);
 
-    if response.is_good() {
-      reply = transform_modbus_return_registers(response);
+    if response.is_ok() {
+      reply = transform_modbus_return_registers(response.unwrap());
     } else {
       reply = vec![];
     }
@@ -553,10 +553,10 @@ impl MasterAccess for TcpClient {
   fn read_input_registers(&mut self, address: u16, quantity: u16) -> Vec<u16> {
     let reply: Vec<u16>;
 
-    let response: ModbusReturnRegisters = EthernetMaster::read_input_registers(self, address, quantity);
+    let response = EthernetMaster::read_input_registers(self, address, quantity);
 
-    if response.is_good() {
-      reply = transform_modbus_return_registers(response);
+    if response.is_ok() {
+      reply = transform_modbus_return_registers(response.unwrap());
     } else {
       reply = vec![];
     }
@@ -567,10 +567,9 @@ impl MasterAccess for TcpClient {
   fn write_single_coil(&mut self, address: u16, value: CoilValue) -> bool {
     let mut reply: bool = false;
 
-    let response: ModbusReturnCoils =
-      EthernetMaster::write_single_coil(self, address, convert_for_write_single_coil(&value));
+    let response = EthernetMaster::write_single_coil(self, address, convert_for_write_single_coil(&value));
 
-    if response.is_good() {
+    if response.is_ok() {
       reply = true;
     }
 
@@ -578,7 +577,7 @@ impl MasterAccess for TcpClient {
   }
 
   fn write_single_register(&mut self, address: u16, value: u16) -> bool {
-    let response: ModbusReturnRegisters = EthernetMaster::write_single_register(self, address, value);
+    let response: ModbusReturnRegisters = EthernetMaster::write_single_register(self, address, value).unwrap();
 
     return response.is_good();
   }
@@ -589,7 +588,7 @@ impl MasterAccess for TcpClient {
     if coils.len() > 0 {
       let values: Vec<u8> = transform_coils_to_bytearray(&coils);
       let response: ModbusReturnRegisters =
-        EthernetMaster::write_multiple_coils(self, address, coils.len() as u16, values);
+        EthernetMaster::write_multiple_coils(self, address, coils.len() as u16, values).unwrap();
 
       reply = response.is_good();
     }
@@ -598,7 +597,7 @@ impl MasterAccess for TcpClient {
   }
 
   fn write_multiple_registers(&mut self, address: u16, values: Vec<u16>) -> bool {
-    let response: ModbusReturnRegisters = EthernetMaster::write_multiple_registers(self, address, values);
+    let response: ModbusReturnRegisters = EthernetMaster::write_multiple_registers(self, address, values).unwrap();
 
     return response.is_good();
   }

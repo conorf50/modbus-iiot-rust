@@ -79,19 +79,17 @@ fn test_extract_byte_from_bytearray() {
 pub fn extract_byte_from_bytearray(source_array: &Vec<u8>, start_index: u8) -> Result<u8, DataTransformError> {
   let reply: u8;
 
-  // Extract only one byte from the array
-  let result = extract_bytes_from_bytearray(&source_array, start_index, 1);
+  let result: Vec<u8> = extract_bytes_from_bytearray(&source_array, start_index, 1)?;
 
-  match result {
-    Ok(result) => {
-      let reply = result[0];
-    }
-    Err(_) => {
-      return Result::Err(DataTransformError {
-        message: "Array was empty".to_string(),
-      })
-    }
-  };
+  if !result.is_empty(){
+    // Extract only one byte from the array
+
+    reply = result[0];
+  }
+  
+  else {
+    return Result::Err(DataTransformError{message: "Could not extract byte value from byte array.".to_string() } );
+  }
 
   Ok(reply)
 }
