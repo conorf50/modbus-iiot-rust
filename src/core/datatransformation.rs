@@ -130,7 +130,6 @@ pub fn extract_bytes_from_bytearray(
   start_index: u8,
   byte_count: u8,
 ) -> Result<Vec<u8>, DataTransformError> {
-  let reply: Result<Vec<u8>, DataTransformError>;
 
   let source_length: u8 = source_array.len() as u8;
   let verify_length: u8 = start_index + byte_count;
@@ -174,7 +173,6 @@ fn test_extract_word_from_bytearray() {
 }
 
 pub fn extract_word_from_bytearray(source_array: &Vec<u8>, start_index: u8) -> Result<u16, DataTransformError> {
-  let reply: Result<u16, DataTransformError>;
 
   let result = extract_bytes_from_bytearray(&source_array, start_index, 2)?;
   let reply = transform_bytes_to_word(&result, 0);

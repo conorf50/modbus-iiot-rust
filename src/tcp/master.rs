@@ -112,9 +112,9 @@ impl TcpClient {
 
     let timeout: Duration = Duration::from_millis(500);
 
-    connection.set_read_timeout(Some(timeout));
-    connection.set_write_timeout(Some(timeout));
-    connection.set_nodelay(true);
+    connection.set_read_timeout(Some(timeout))?;
+    connection.set_write_timeout(Some(timeout))?;
+    connection.set_nodelay(true)?;
 
     //self.stream = Some(connection);
 
@@ -138,7 +138,7 @@ impl TcpClient {
 
   fn process_telegram(&mut self, request: &ModbusTelegram) -> Result<ModbusTelegram, ModbusTelegramError> {
     //let mut reply: ModbusTelegram;
-    let mut stream = self.stream.take();
+    let stream = self.stream.take();
     
     if stream.is_some(){
       let reply = process_modbus_telegram(&mut stream.unwrap(), request)?;

@@ -14,7 +14,9 @@ impl fmt::Display for NetParseErr {
 impl std::error::Error for NetParseErr {}
 
 impl From<std::io::Error> for NetParseErr {
-  fn from(error: std::io::Error) -> Self {
+
+  // '_' gets rid of the "unused variable" warning 
+  fn from(_ : std::io::Error) -> Self {
     NetParseErr {}
   }
 }
@@ -32,7 +34,7 @@ impl fmt::Display for ZeroPortErr {
 impl std::error::Error for ZeroPortErr {}
 
 impl From<std::io::Error> for ZeroPortErr {
-  fn from(error: std::io::Error) -> Self {
+  fn from(_: std::io::Error) -> Self {
     ZeroPortErr {}
   }
 }

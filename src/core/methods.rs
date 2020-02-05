@@ -1340,7 +1340,7 @@ fn test_verify_parameter_read_coils() {
 fn verify_parameter_read_coils(starting_address: u16, quantity_of_coils: u16) -> Result<bool, CoilError> {
   let mut reply: bool = false;
 
-  let mut address_good: bool = is_start_and_quantity_ok(starting_address, quantity_of_coils);
+  let address_good: bool = is_start_and_quantity_ok(starting_address, quantity_of_coils);
 
   if !address_good {
     return Result::Err(CoilError {
@@ -1400,7 +1400,7 @@ fn verify_parameter_read_discrete_inputs(
   quantity_of_inputs: u16,
 ) -> Result<bool, RegisterError> {
   let mut reply: bool = false;
-  let mut address_good: bool = is_start_and_quantity_ok(starting_address, quantity_of_inputs);
+  let address_good: bool = is_start_and_quantity_ok(starting_address, quantity_of_inputs);
 
   if !address_good {
     return Result::Err(RegisterError {
@@ -1717,7 +1717,7 @@ fn test_verify_parameter_write_single_coil() {
 }
 
 fn verify_parameter_write_single_coil(output_value: u16) -> Result<bool, CoilError> {
-  let mut reply: bool = false;
+  let reply: bool;
 
   if !(output_value == 0x0000 || output_value == 0xFF00) {
     return Result::Err(CoilError {
@@ -1745,7 +1745,7 @@ fn verify_parameter_write_single_register(register_address: u16, output_value: u
   let quantity_good: bool;
 
   if address_good {
-    if is_value_in_range(output_value, 0x0001, 0xFFF) {
+    if is_value_in_range(output_value, 0x0000, 0xFFF) {
       quantity_good = true;
     } else {
       quantity_good = false;

@@ -20,7 +20,6 @@ impl ModbusTelegram {
     payload: &Vec<u8>,
     expected_bytes: u8,
   ) -> Result<ModbusTelegram, ModbusTelegramError> {
-    let reply: Result<ModbusTelegram, ModbusTelegramError>;
 
     if transaction_identifier > 0x0000 && function_code > 0x00 {
       Ok(ModbusTelegram {
@@ -38,8 +37,7 @@ impl ModbusTelegram {
   }
 
   pub fn new_from_bytes(bytes: &Vec<u8>) -> Result<ModbusTelegram, DataTransformError> {
-    let reply: Result<ModbusTelegram, ModbusTelegramError>;
-
+    
     if bytes.len() > 9 {
       let response_transaction_identifier: u16 = extract_word_from_bytearray(&bytes, 0)?;
       let response_unit_identifier: u8 = extract_byte_from_bytearray(&bytes, 6)?;
