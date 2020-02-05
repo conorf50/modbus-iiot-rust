@@ -1783,13 +1783,13 @@ fn test_verify_parameter_write_single_register_1() {
 #[test]
 fn test_verify_parameter_write_single_register_2() {
   // register value out of bounds
-  let result_2: Result<bool, RegisterError> = verify_parameter_write_single_register(40102, 231232);
+  let result_2: Result<bool, RegisterError> = verify_parameter_write_single_register(40102, 23132);
   assert!(result_2.is_err());
 }
 
 #[test]
 fn test_verify_parameter_write_single_register_3() {
   // register index out of bounds
-  let result_3: Result<bool, RegisterError> = verify_parameter_write_single_register(401023, 233);
+  let result_3: Result<bool, RegisterError> = verify_parameter_write_single_register(40103, 233);
   assert!(result_3.is_err());
 }

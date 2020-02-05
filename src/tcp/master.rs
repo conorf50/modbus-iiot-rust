@@ -137,21 +137,20 @@ impl TcpClient {
   }
 
   fn process_telegram(&mut self, request: &ModbusTelegram) -> Result<ModbusTelegram, ModbusTelegramError> {
-    let mut reply: ModbusTelegram;
+    //let mut reply: ModbusTelegram;
+    let mut stream = self.stream.take();
+    
+    if stream.is_some(){
+      let reply = process_modbus_telegram(&mut stream.unwrap(), request)?;
 
-	let mut stream = self.stream.take();
-	
-	if stream.is_some(){
-		let reply = process_modbus_telegram(&mut stream.unwrap(), request);
-		self.stream = Some(stream.unwrap());
-		self.update_last_transaction_id();
-	}
-	else {
-		return Result::Err(ModbusTelegramError{message: "Stream was empty.".to_string() } );
+      self.update_last_transaction_id();
+      Ok(reply)
+    }
+    else {
+      return Result::Err(ModbusTelegramError{message: "Stream was empty.".to_string() } );
 
-	}
-	
-	Ok(reply)
+    }
+
   }
 
   fn update_last_transaction_id(&mut self) {
@@ -195,8 +194,6 @@ impl EthernetMaster for TcpClient {
     starting_address: u16,
     quantity_of_coils: u16,
   ) -> Result<ModbusReturnCoils, ModbusTelegramError> {
-
-    let reply: Result<ModbusReturnCoils, ModbusTelegramError>;
 
     let start_time: Timestamp = Timestamp::new();
     let request_telegram = create_request_read_coils(

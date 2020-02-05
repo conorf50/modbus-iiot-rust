@@ -43,7 +43,7 @@ impl From<std::io::Error> for ZeroPortErr {
 // Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
 #[derive(Debug)]
 pub struct CoilError {
-  message: String,
+  pub  message: String,
 }
 
 // Using this, we can call the same error with different messages to display to the end-user
@@ -68,7 +68,7 @@ impl From<std::io::Error> for CoilError {
 // Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
 #[derive(Debug)]
 pub struct ModbusTelegramError {
-  message: String,
+  pub message: String,
 }
 
 // Using this, we can call the same error with different messages to display to the end-user
@@ -93,7 +93,7 @@ impl From<std::io::Error> for ModbusTelegramError {
 // Uses some examples from here: https://learning-rust.github.io/docs/e7.custom_error_types.html
 #[derive(Debug)]
 pub struct RegisterError {
-  message: String,
+  pub message: String,
 }
 
 // Using this, we can call the same error with different messages to display to the end-user
@@ -117,7 +117,7 @@ impl From<std::io::Error> for RegisterError {
 // For errors that occur during data conversion
 #[derive(Debug)]
 pub struct DataTransformError {
-  message: String,
+  pub message: String,
 }
 
 // Using this, we can call the same error with different messages to display to the end-user
@@ -139,8 +139,8 @@ impl From<std::io::Error> for DataTransformError {
 // For errors that occur during function code parsing
 #[derive(Debug)]
 pub struct FunctionCodeError {
-  message: String,
-  code: u8,
+  pub message: String,
+  pub code: u8,
 }
 
 // Using this, we can call the same error with different messages to display to the end-user
