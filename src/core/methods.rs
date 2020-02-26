@@ -56,16 +56,17 @@ pub fn create_request_read_coils(
 
   if parameter_verification.is_ok() {
     let payload: Vec<u8> = prepare_payload_read_coils(starting_address, quantity_of_coils);
-    let telegram: Result<ModbusTelegram, ModbusTelegramError> = ModbusTelegram::new(
+    let telegram = ModbusTelegram::new(
       transaction_identifier,
       unit_identifier,
       FUNCTION_CODE_READ_COILS,
       &payload,
       get_expected_byte_count_read_coils(quantity_of_coils),
     );
-
-    return pack_telegram(telegram);
-  } else {
+    return telegram;
+    //return pack_telegram(telegram);
+  } 
+  else {
     return Result::Err(ModbusTelegramError {
       message: "Could not create telegram".to_string(),
     });
